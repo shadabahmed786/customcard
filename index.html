@@ -460,6 +460,17 @@
 			gap: 10px;
 		}
 		.samples-collapsed .sample:nth-child(n+3) { display: none; }
+		.mobile-preview-toggle {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			width: 100%;
+		}
+		.mobile-preview-toggle i { transition: transform 180ms var(--ui-ease); }
+		.mobile-preview-toggle:not(.collapsed) i { transform: rotate(180deg); }
+		@media (max-width: 991.98px) {
+			.preview-sticky { position: static !important; top: auto !important; }
+		}
 		@media (max-width: 575.98px) {
 			.sample-grid { grid-template-columns: 1fr; }
 		}
@@ -581,6 +592,33 @@
 			.hero::after, .mini-card { animation: none !important; }
 			.flip-inner, .card-canvas, .card-accent-bar, .detail i { transition: none !important; }
 		}
+
+		/* Designer top bar */
+		.designer-topbar {
+			position: sticky;
+			top: 0;
+			z-index: 1030;
+			border-radius: 16px;
+			background:
+				linear-gradient(180deg,
+					rgba(var(--bs-body-bg-rgb), .92),
+					rgba(var(--bs-body-bg-rgb), .78)
+				);
+			border: 1px solid rgba(0,0,0,.06);
+			box-shadow: var(--bs-box-shadow-sm);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+		}
+		.designer-topbar::before {
+			content: '';
+			position: absolute;
+			inset: 0 auto 0 0;
+			width: 4px;
+			border-radius: 16px 0 0 16px;
+			background: rgba(var(--bs-primary-rgb), .85);
+		}
+		.designer-topbar-inner { position: relative; }
+		.designer-actions .btn { white-space: nowrap; }
 	</style>
 </head>
 
@@ -632,17 +670,28 @@
 	<div id="designerView" class="container-fluid py-4 no-print d-none">
 		<div class="row g-4">
 			<div class="col-12">
-				<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-					<div>
-						<h1 class="h3 mb-1 app-title">Visiting Card Designer</h1>
-						<div class="text-body-secondary">Customize, preview live, export to PNG/PDF.</div>
-					</div>
-					<div class="d-flex flex-wrap gap-2">
-						<button id="btnBackToLanding" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Landing</button>
-						<button id="btnPng" class="btn btn-primary"><i class="bi bi-image me-1"></i>Download PNG</button>
-						<button id="btnPdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</button>
-						<button id="btnSaveCustom" class="btn btn-outline-primary"><i class="bi bi-bookmark-plus me-1"></i>Save my Card</button>
-						<button id="btnShare" class="btn btn-outline-secondary"><i class="bi bi-link-45deg me-1"></i>Copy Share Link</button>
+				<div class="designer-topbar p-3 p-lg-3 position-relative">
+					<div class="designer-topbar-inner d-flex flex-wrap gap-2 align-items-center justify-content-between">
+						<div class="pe-2">
+							<h1 class="h3 mb-1 app-title">Visiting Card Designer</h1>
+							<div class="text-body-secondary">Customize, preview live, export to PNG/PDF.</div>
+						</div>
+						<div class="designer-actions d-flex flex-wrap gap-2 align-items-center">
+							<button id="btnBackToLanding" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</button>
+							<div class="dropdown">
+								<button class="btn btn-primary d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">
+									<i class="bi bi-list" style="font-size: 20px;"></i>
+									<span class="d-none d-sm-inline">Menu</span>
+								</button>
+								<ul class="dropdown-menu dropdown-menu-end">
+									<li><button id="actionPng" type="button" class="dropdown-item"><i class="bi bi-image me-2"></i>Download PNG</button></li>
+									<li><button id="actionPdf" type="button" class="dropdown-item"><i class="bi bi-file-earmark-pdf me-2"></i>Download PDF</button></li>
+									<li><hr class="dropdown-divider"></li>
+									<li><button id="actionSaveCustom" type="button" class="dropdown-item"><i class="bi bi-bookmark-plus me-2"></i>Save my Card</button></li>
+									<li><button id="actionShare" type="button" class="dropdown-item"><i class="bi bi-link-45deg me-2"></i>Copy Share Link</button></li>
+								</ul>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -724,6 +773,23 @@
 									</div>
 								</div>
 								<div class="text-body-secondary small mt-2">Click a sample to auto-fill and preview.</div>
+							</div>
+
+							<!-- Mobile: preview toggle between designs and form -->
+							<div class="col-12 d-lg-none">
+								<div class="card border">
+									<div class="card-body py-2">
+										<button class="btn btn-link text-decoration-none p-0 mobile-preview-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mobilePreviewCollapse" aria-expanded="false" aria-controls="mobilePreviewCollapse">
+											<span class="fw-semibold text-body">Live Preview</span>
+											<i class="bi bi-chevron-down text-body-secondary"></i>
+										</button>
+									</div>
+									<div id="mobilePreviewCollapse" class="collapse">
+										<div class="card-body pt-0">
+											<div id="mobilePreviewHost"></div>
+										</div>
+									</div>
+								</div>
 							</div>
 							<div id="customDesignsWrap" class="col-12 d-none">
 								<h2 class="h6 mb-2">Custom Designs</h2>
@@ -894,7 +960,13 @@
 			</div>
 
 			<div class="col-12 col-lg-7">
-				<div class="card shadow-sm position-sticky" style="top: 16px;">
+				<!-- Desktop preview host (preview panel is moved here on lg+) -->
+				<div id="desktopPreviewHost"></div>
+			</div>
+
+			<!-- Preview panel (moved between desktop/mobile hosts) -->
+			<div id="previewPanel" class="d-none">
+				<div class="card shadow-sm position-sticky preview-sticky" style="top: 16px;">
 					<div class="card-body">
 						<div class="d-flex align-items-center justify-content-between mb-3">
 							<div>
@@ -1023,11 +1095,18 @@
 			designerView: $('designerView'),
 			btnStart: $('btnStart'),
 			btnBackToLanding: $('btnBackToLanding'),
-			btnSaveCustom: $('btnSaveCustom'),
+			actionPng: $('actionPng'),
+			actionPdf: $('actionPdf'),
+			actionSaveCustom: $('actionSaveCustom'),
+			actionShare: $('actionShare'),
 			btnViewAllDesigns: $('btnViewAllDesigns'),
 			customDesignsWrap: $('customDesignsWrap'),
 			customGrid: $('customGrid'),
 			sampleDesignsWrap: $('sampleDesignsWrap'),
+			previewPanel: $('previewPanel'),
+			desktopPreviewHost: $('desktopPreviewHost'),
+			mobilePreviewHost: $('mobilePreviewHost'),
+			mobilePreviewCollapse: $('mobilePreviewCollapse'),
 			template: $('template'),
 			layout: $('layout'),
 			fullName: $('fullName'),
@@ -1052,9 +1131,6 @@
 			companyBold: $('companyBold'),
 			qrType: $('qrType'),
 			qrEnabled: $('qrEnabled'),
-			btnPng: $('btnPng'),
-			btnPdf: $('btnPdf'),
-			btnShare: $('btnShare'),
 			btnFront: $('btnFront'),
 			btnBack: $('btnBack'),
 			btnFlip: $('btnFlip'),
@@ -1091,8 +1167,21 @@
 		function showDesigner() {
 			els.landingView?.classList.add('d-none');
 			els.designerView?.classList.remove('d-none');
+			mountPreviewForViewport();
 			requestScale();
 			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+
+		const mqlLgDown = window.matchMedia('(max-width: 991.98px)');
+		function mountPreviewForViewport() {
+			const panel = els.previewPanel;
+			const desktopHost = els.desktopPreviewHost;
+			const mobileHost = els.mobilePreviewHost;
+			if (!panel || !desktopHost || !mobileHost) return;
+			const target = mqlLgDown.matches ? mobileHost : desktopHost;
+			if (panel.parentElement !== target) target.appendChild(panel);
+			panel.classList.remove('d-none');
+			requestScale();
 		}
 
 		const preview = {
@@ -1470,8 +1559,10 @@
 			if (!stage) return;
 			const maxW = stage.clientWidth - 24;
 			const maxH = stage.clientHeight - 24;
+			if (maxW <= 0 || maxH <= 0) return;
 			const w = els.cardFront.offsetWidth;
 			const h = els.cardFront.offsetHeight;
+			if (!w || !h) return;
 			const s = Math.min(maxW / w, maxH / h, 1);
 			els.cardScale.style.transform = `translate(-50%, -50%) scale(${s})`;
 		}
@@ -1756,8 +1847,15 @@
 			const url = encodeStateToHash();
 			try {
 				await navigator.clipboard.writeText(url);
-				els.btnShare.textContent = 'Copied!';
-				setTimeout(() => { els.btnShare.innerHTML = '<i class="bi bi-link-45deg me-1"></i>Copy Share Link'; }, 1400);
+				const shareEl = els.actionShare;
+				if (shareEl) {
+					const original = shareEl.getAttribute('data-original-html') || shareEl.innerHTML;
+					shareEl.setAttribute('data-original-html', original);
+					shareEl.textContent = 'Copied!';
+					setTimeout(() => {
+						shareEl.innerHTML = shareEl.getAttribute('data-original-html') || '<i class="bi bi-link-45deg me-2"></i>Copy Share Link';
+					}, 1400);
+				}
 			} catch {
 				// Fallback: prompt
 				window.prompt('Copy this link:', url);
@@ -1815,15 +1913,22 @@
 				readImage(els.avatarUpload.files?.[0], preview.avatarImg, preview.avatarFallback);
 			});
 
-			els.btnPng.addEventListener('click', exportPng);
-			els.btnPdf.addEventListener('click', exportPdf);
-			els.btnShare.addEventListener('click', copyShareLink);
+			els.actionPng?.addEventListener('click', exportPng);
+			els.actionPdf?.addEventListener('click', exportPdf);
+			els.actionSaveCustom?.addEventListener('click', saveCustomDesign);
+			els.actionShare?.addEventListener('click', copyShareLink);
 
 			els.btnViewAllDesigns?.addEventListener('click', () => {
 				const wrap = els.sampleDesignsWrap;
 				if (!wrap) return;
 				const collapsed = wrap.classList.toggle('samples-collapsed');
 				els.btnViewAllDesigns.textContent = collapsed ? 'View all designs' : 'Hide designs';
+			});
+
+			// Mobile preview: rescale when the collapse opens.
+			els.mobilePreviewCollapse?.addEventListener('shown.bs.collapse', () => {
+				mountPreviewForViewport();
+				requestScale();
 			});
 
 			// Samples
@@ -1844,7 +1949,7 @@
 			});
 
 			window.addEventListener('afterprint', clearPrintDom);
-			els.btnSaveCustom?.addEventListener('click', saveCustomDesign);
+			// Save handled via hamburger menu item
 
 			els.btnStart?.addEventListener('click', () => {
 				showDesigner();
@@ -1886,7 +1991,10 @@
 				loadCustomDesign(id);
 			});
 
-			window.addEventListener('resize', requestScale);
+			window.addEventListener('resize', () => {
+				mountPreviewForViewport();
+				requestScale();
+			});
 		}
 
 		const samples = [
@@ -2014,6 +2122,7 @@
 
 		// Init
 		wire();
+		mountPreviewForViewport();
 		applyTemplate('corporate');
 		tryLoadStateFromHash();
 		updatePreview();

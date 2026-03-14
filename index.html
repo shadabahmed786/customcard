@@ -1228,6 +1228,54 @@
 
 		let qrInstance = null;
 		let qrInstanceBack = null;
+
+		function nextFrame() {
+			return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+		}
+
+		function freezeQrHostToImage(qrHostEl, { size = 118 } = {}) {
+			if (!qrHostEl) return;
+			// qrcodejs often renders to a <canvas>. When we clone the DOM for export,
+			// canvas pixels are NOT cloned, so the QR disappears in PDF/PNG.
+			const existingImg = qrHostEl.querySelector('img');
+			if (existingImg && existingImg.src) {
+				existingImg.style.display = 'block';
+				const existingCanvas = qrHostEl.querySelector('canvas');
+				if (existingCanvas) existingCanvas.remove();
+				return;
+			}
+
+			const canvas = qrHostEl.querySelector('canvas');
+			if (!canvas) return;
+			let dataUrl = '';
+			try {
+				dataUrl = canvas.toDataURL('image/png');
+			} catch {
+				return;
+			}
+			qrHostEl.innerHTML = '';
+			const img = document.createElement('img');
+			img.alt = 'QR code';
+			img.src = dataUrl;
+			img.width = size;
+			img.height = size;
+			img.style.width = size + 'px';
+			img.style.height = size + 'px';
+			img.style.display = 'block';
+			qrHostEl.appendChild(img);
+		}
+
+		async function ensureImagesLoaded(rootEl) {
+			const imgs = Array.from(rootEl?.querySelectorAll?.('img') || []).filter((img) => img?.src);
+			if (imgs.length === 0) return;
+			await Promise.all(imgs.map((img) => {
+				if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+				return new Promise((resolve) => {
+					img.addEventListener('load', resolve, { once: true });
+					img.addEventListener('error', resolve, { once: true });
+				});
+			}));
+		}
 		function buildVCard() {
 			const name = (els.fullName.value || '').trim();
 			const org = (els.company.value || '').trim();
@@ -1302,6 +1350,12 @@
 				colorDark: '#000000',
 				colorLight: '#ffffff',
 				correctLevel: QRCode.CorrectLevel.M
+			});
+
+			// Freeze to <img> so export cloning keeps the QR pixels.
+			nextFrame().then(() => {
+				freezeQrHostToImage(els.qr, { size: 118 });
+				freezeQrHostToImage(els.qrBack, { size: 118 });
 			});
 		}
 
@@ -1621,6 +1675,7 @@
 		}
 
 		async function exportPng() {
+			await prepareQrForExport();
 			const canvas = await renderCardToCanvas(activeCardEl());
 
 			const a = document.createElement('a');
@@ -1629,7 +1684,20 @@
 			a.click();
 		}
 
-		async function renderCardToCanvas(cardEl) {
+		async function prepareQrForExport() {
+			// Ensure the on-screen QR is an <img> (not <canvas>) before cloning.
+			// Otherwise cloneNode(true) loses canvas pixels and QR disappears in exports.
+			if (!els.qrEnabled.checked) return;
+			updateQr();
+			await nextFrame();
+			freezeQrHostToImage(els.qr, { size: 118 });
+			freezeQrHostToImage(els.qrBack, { size: 118 });
+			await nextFrame();
+			await ensureImagesLoaded(els.cardFront);
+			await ensureImagesLoaded(els.cardBack);
+		}
+
+		async function renderCardToCanvas(cardEl, { scale = 2 } = {}) {
 			const container = document.createElement('div');
 			container.style.position = 'fixed';
 			container.style.left = '-10000px';
@@ -1644,27 +1712,36 @@
 			container.appendChild(clone);
 			document.body.appendChild(container);
 
-			await new Promise(requestAnimationFrame);
+			// Ensure webfonts + images are ready before capturing.
+			try { await document.fonts?.ready; } catch { /* ignore */ }
+			await nextFrame();
+			await ensureImagesLoaded(clone);
+			await nextFrame();
 			const canvas = await html2canvas(clone, {
 				backgroundColor: null,
-				scale: 2,
-				useCORS: true
+				scale,
+				useCORS: true,
+				allowTaint: true
 			});
 			document.body.removeChild(container);
 			return canvas;
 		}
 
 		async function exportPdf() {
-			const frontCanvas = await renderCardToCanvas(els.cardFront);
-			const backCanvas = await renderCardToCanvas(els.cardBack);
-			const frontPng = frontCanvas.toDataURL('image/png');
-			const backPng = backCanvas.toDataURL('image/png');
+			await prepareQrForExport();
+			// PDF: use slightly lower render scale + JPEG compression to keep file size reasonable.
+			const pdfScale = 1.35;
+			const jpegQuality = 0.82;
+			const frontCanvas = await renderCardToCanvas(els.cardFront, { scale: pdfScale });
+			const backCanvas = await renderCardToCanvas(els.cardBack, { scale: pdfScale });
+			const frontJpg = frontCanvas.toDataURL('image/jpeg', jpegQuality);
+			const backJpg = backCanvas.toDataURL('image/jpeg', jpegQuality);
 
 			const { jsPDF } = window.jspdf;
-			const doc = new jsPDF({ orientation: 'landscape', unit: 'in', format: [3.5, 2] });
-			doc.addImage(frontPng, 'PNG', 0, 0, 3.5, 2);
+			const doc = new jsPDF({ orientation: 'landscape', unit: 'in', format: [3.5, 2], compress: true });
+			doc.addImage(frontJpg, 'JPEG', 0, 0, 3.5, 2, undefined, 'FAST');
 			doc.addPage([3.5, 2], 'landscape');
-			doc.addImage(backPng, 'PNG', 0, 0, 3.5, 2);
+			doc.addImage(backJpg, 'JPEG', 0, 0, 3.5, 2, undefined, 'FAST');
 			doc.save('visiting-card.pdf');
 		}
 

@@ -459,6 +459,7 @@
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 10px;
 		}
+		.samples-collapsed .sample:nth-child(n+3) { display: none; }
 		@media (max-width: 575.98px) {
 			.sample-grid { grid-template-columns: 1fr; }
 		}
@@ -626,6 +627,7 @@
 		</div>
 	</div>
 
+
 	<!-- Designer view -->
 	<div id="designerView" class="container-fluid py-4 no-print d-none">
 		<div class="row g-4">
@@ -650,8 +652,11 @@
 					<div class="card-body">
 						<div class="row g-3">
 							<div class="col-12">
-								<h2 class="h6 mb-2">Sample Designs</h2>
-								<div class="sample-grid" id="sampleGrid" aria-label="Sample designs">
+									<div class="d-flex align-items-center justify-content-between mb-2">
+										<h2 class="h6 mb-0">Sample Designs</h2>
+										<button id="btnViewAllDesigns" type="button" class="btn btn-sm btn-outline-secondary">View all designs</button>
+									</div>
+									<div id="sampleDesignsWrap" class="sample-grid samples-collapsed" aria-label="Sample designs">
 									<div class="sample" data-sample="0" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#0b1f3a;--tx:#ffffff;--c:#2f80ed;">
 											<div class="bar"></div>
@@ -719,11 +724,11 @@
 									</div>
 								</div>
 								<div class="text-body-secondary small mt-2">Click a sample to auto-fill and preview.</div>
-								<div id="customDesignsWrap" class="mt-3 d-none">
-									<h2 class="h6 mb-2">Custom Designs</h2>
-									<div class="sample-grid" id="customGrid" aria-label="Custom designs"></div>
-									<div class="text-body-secondary small mt-2">Saved in this browser. Click to load.</div>
-								</div>
+							</div>
+							<div id="customDesignsWrap" class="col-12 d-none">
+								<h2 class="h6 mb-2">Custom Designs</h2>
+								<div class="sample-grid" id="customGrid" aria-label="Custom designs"></div>
+								<div class="text-body-secondary small mt-2">Saved in this browser. Click to load.</div>
 							</div>
 							<div class="col-12">
 								<div class="d-flex gap-2 flex-wrap">
@@ -1019,8 +1024,10 @@
 			btnStart: $('btnStart'),
 			btnBackToLanding: $('btnBackToLanding'),
 			btnSaveCustom: $('btnSaveCustom'),
+			btnViewAllDesigns: $('btnViewAllDesigns'),
 			customDesignsWrap: $('customDesignsWrap'),
 			customGrid: $('customGrid'),
+			sampleDesignsWrap: $('sampleDesignsWrap'),
 			template: $('template'),
 			layout: $('layout'),
 			fullName: $('fullName'),
@@ -1812,8 +1819,15 @@
 			els.btnPdf.addEventListener('click', exportPdf);
 			els.btnShare.addEventListener('click', copyShareLink);
 
+			els.btnViewAllDesigns?.addEventListener('click', () => {
+				const wrap = els.sampleDesignsWrap;
+				if (!wrap) return;
+				const collapsed = wrap.classList.toggle('samples-collapsed');
+				els.btnViewAllDesigns.textContent = collapsed ? 'View all designs' : 'Hide designs';
+			});
+
 			// Samples
-			const sampleGrid = document.getElementById('sampleGrid');
+			const sampleGrid = document.getElementById('sampleDesignsWrap');
 			sampleGrid?.addEventListener('click', (e) => {
 				const node = e.target.closest?.('.sample');
 				if (!node) return;
@@ -1994,6 +2008,7 @@
 			if (!s) return;
 			applyState(s);
 			showFront();
+			showDesigner();
 			requestScale();
 		}
 

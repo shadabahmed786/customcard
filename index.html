@@ -1,0 +1,1934 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Visiting Card Designer</title>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+	<style>
+		:root {
+			--card-bg: #0b1f3a;
+			--card-text: #ffffff;
+			--card-accent: #2f80ed;
+			--card-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+			--card-font-size: 14px;
+			--ui-ease: cubic-bezier(.2,.8,.2,1);
+		}
+
+		body { background: var(--bs-body-bg); }
+
+		.app-title {
+			letter-spacing: .2px;
+		}
+
+		.stage {
+			position: relative;
+			width: 100%;
+			min-height: 340px;
+			height: 640px;
+			overflow: hidden;
+			background:
+				radial-gradient(1000px 380px at 18% 20%, rgba(13,110,253,.10), rgba(13,110,253,0)),
+				radial-gradient(900px 360px at 86% 82%, rgba(25,135,84,.10), rgba(25,135,84,0)),
+				var(--bs-tertiary-bg);
+		}
+		@media (max-width: 991.98px) {
+			.stage { height: 520px; }
+		}
+		@media (max-width: 575.98px) {
+			.stage { height: 420px; min-height: 320px; }
+		}
+
+		/* Flip / 3D preview */
+		.flip-scene {
+			perspective: 1400px;
+			width: 1050px;
+			height: 600px;
+		}
+		.flip-inner {
+			width: 100%;
+			height: 100%;
+			position: relative;
+			transform-style: preserve-3d;
+			transition: transform 700ms var(--ui-ease);
+		}
+		.flip-inner.is-flipped { transform: rotateY(180deg); }
+		.card-face {
+			position: absolute;
+			inset: 0;
+			backface-visibility: hidden;
+		}
+		.card-face.back { transform: rotateY(180deg); }
+
+		/* Business card at 300 DPI: 3.5" x 2" -> 1050 x 600 */
+		.card-canvas {
+			width: 1050px;
+			height: 600px;
+			border-radius: 18px;
+			overflow: hidden;
+			background: var(--card-bg);
+			color: var(--card-text);
+			font-family: var(--card-font);
+			font-size: var(--card-font-size);
+			box-shadow: var(--bs-box-shadow);
+			user-select: none;
+			position: relative;
+			transition: background-color 250ms var(--ui-ease), color 250ms var(--ui-ease);
+		}
+
+		.card-canvas a { color: inherit; text-decoration: none; }
+
+		.card-accent-bar {
+			position: absolute;
+			inset: 0 auto 0 0;
+			width: 20px;
+			background: var(--card-accent);
+			opacity: .95;
+			transition: background-color 250ms var(--ui-ease);
+		}
+
+		.card-inner {
+			height: 100%;
+			padding: 34px 40px;
+			display: grid;
+			gap: 14px;
+		}
+
+		/* Reserve area for pinned front logo */
+		#cardFront .card-inner { padding-bottom: 140px; }
+
+		.layout-classic-left .card-inner {
+			grid-template-columns: 1fr auto;
+			grid-template-rows: auto 1fr auto;
+			align-items: start;
+		}
+
+		.layout-centered .card-inner {
+			grid-template-columns: 1fr;
+			grid-template-rows: auto auto auto 1fr;
+			align-content: start;
+			text-align: center;
+		}
+
+		.layout-split .card-inner {
+			grid-template-columns: 1.1fr .9fr;
+			grid-template-rows: auto 1fr;
+			align-items: start;
+		}
+
+		/* Reduce empty space by balancing content blocks */
+		.layout-classic-left .details,
+		.layout-split .details {
+			grid-row: 2 / 4;
+		}
+		.layout-classic-left .social,
+		.layout-split .social {
+			align-self: end;
+			justify-self: end;
+		}
+		.layout-classic-left .qr,
+		.layout-split .qr {
+			grid-column: 2;
+			justify-self: end;
+		}
+		.layout-centered .qr { justify-self: center; }
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			min-height: 56px;
+		}
+
+		.layout-centered .brand { justify-content: center; }
+
+		.logo {
+			width: 86px;
+			height: 86px;
+			border-radius: 14px;
+			background: rgba(255,255,255,.12);
+			display: grid;
+			place-items: center;
+			overflow: hidden;
+			flex: 0 0 auto;
+		}
+		.logo img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+		/* Front card: logo pinned bottom-left */
+		#cardFront .logo {
+			position: absolute;
+			left: 40px;
+			bottom: 34px;
+			z-index: 2;
+		}
+
+		.fallback-icon { opacity: .6; }
+
+		.avatar {
+			width: 92px;
+			height: 92px;
+			border-radius: 999px;
+			background: rgba(255,255,255,.12);
+			display: grid;
+			place-items: center;
+			overflow: hidden;
+			flex: 0 0 auto;
+			border: 3px solid rgba(255,255,255,.16);
+		}
+		.avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
+
+		/* Optional sample style: no profile photo */
+		.no-avatar .avatar { display: none; }
+		.no-avatar .brand { gap: 14px; }
+
+		.brand-text {
+			line-height: 1.1;
+			min-width: 0;
+		}
+		.company {
+			font-weight: 700;
+			font-size: 1.15em;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.tagline {
+			opacity: .9;
+			font-weight: 500;
+			margin-top: 4px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.person {
+			margin-top: 0;
+			line-height: 1.05;
+			min-width: 0;
+		}
+		.person-head {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			min-width: 0;
+		}
+		.person-text { min-width: 0; }
+
+		/* Put name/title + avatar at the top corner */
+		.layout-classic-left .person,
+		.layout-split .person {
+			grid-column: 2;
+			grid-row: 1;
+			justify-self: end;
+			text-align: right;
+		}
+		.layout-classic-left .person-head,
+		.layout-split .person-head { flex-direction: row-reverse; }
+		.layout-centered .person { justify-self: center; text-align: center; }
+		.layout-centered .person-head { justify-content: center; }
+		.full-name { font-size: 2.2em; font-weight: 700; }
+		.job-title { font-size: 1.1em; opacity: .92; margin-top: 6px; }
+
+		.accent-dot {
+			display: inline-block;
+			width: 10px;
+			height: 10px;
+			border-radius: 999px;
+			background: var(--card-accent);
+			margin-right: 10px;
+			transform: translateY(-1px);
+		}
+
+		.details {
+			display: grid;
+			gap: 8px;
+			font-size: 1.02em;
+			opacity: .98;
+		}
+
+		.detail {
+			display: flex;
+			gap: 10px;
+			align-items: baseline;
+			min-width: 0;
+		}
+		.detail i { color: var(--card-accent); }
+		.detail i { transition: color 250ms var(--ui-ease); }
+		.detail .value {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.social {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px 16px;
+			align-items: center;
+			opacity: .96;
+		}
+		.social .chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 6px 10px;
+			border-radius: 999px;
+			background: rgba(255,255,255,.12);
+			border: 1px solid rgba(255,255,255,.18);
+			max-width: 100%;
+		}
+		.social .chip span {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.qr {
+			width: 128px;
+			height: 128px;
+			border-radius: 12px;
+			background: rgba(255,255,255,.10);
+			display: grid;
+			place-items: center;
+			overflow: hidden;
+			justify-self: end;
+			align-self: end;
+		}
+		.qr.hidden { display: none; }
+
+		/* Back side styling */
+		.card-back-inner {
+			height: 100%;
+			padding: 34px 40px;
+			display: grid;
+			grid-template-columns: 1fr auto;
+			grid-template-rows: auto 1fr auto;
+			gap: 14px;
+			position: relative;
+		}
+		#cardBack {
+			position: relative;
+			overflow: hidden;
+		}
+		#cardBack::before {
+			content: '';
+			position: absolute;
+			inset: 0 auto 0 0;
+			width: 18px;
+			background: linear-gradient(180deg, var(--card-accent), rgba(255,255,255,0));
+			opacity: .95;
+			pointer-events: none;
+		}
+		#cardBack::after {
+			content: '';
+			position: absolute;
+			inset: -40% -40% auto auto;
+			width: 520px;
+			height: 520px;
+			background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.16), rgba(255,255,255,0) 62%);
+			opacity: .65;
+			transform: rotate(14deg);
+			pointer-events: none;
+		}
+		.back-mark {
+			position: absolute;
+			inset: -120px -120px auto auto;
+			width: 360px;
+			height: 360px;
+			background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%);
+			transform: rotate(18deg);
+			pointer-events: none;
+		}
+		.back-brand {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			min-width: 0;
+		}
+		.back-company {
+			font-size: 2.15em;
+			font-weight: 800;
+			letter-spacing: .2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.back-line {
+			opacity: .92;
+			font-weight: 500;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.back-accent {
+			height: 10px;
+			border-radius: 999px;
+			background: var(--card-accent);
+			width: 220px;
+			opacity: .95;
+			transition: background-color 250ms var(--ui-ease);
+		}
+		.back-footer {
+			display: flex;
+			gap: 16px;
+			flex-wrap: wrap;
+			align-items: center;
+			opacity: .96;
+		}
+		.back-footer .chip { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16); }
+		#cardBack .qr {
+			background: rgba(255,255,255,.12);
+			border: 1px solid rgba(255,255,255,.22);
+			box-shadow: 0 10px 26px rgba(0,0,0,.16);
+		}
+		#cardBack .back-footer .chip {
+			padding: 7px 12px;
+			border-radius: 999px;
+		}
+
+		/* Stage scaling for screen preview */
+		.card-scale {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%) scale(1);
+			transform-origin: center;
+			will-change: transform;
+		}
+
+		/* Micro-animations */
+		.pop { animation: pop 500ms var(--ui-ease) both; }
+		@keyframes pop {
+			0% { transform: scale(.985); opacity: .88; }
+			100% { transform: scale(1); opacity: 1; }
+		}
+
+		/* Template variants */
+		.t-minimal .card-accent-bar { display: none; }
+		.t-minimal .social .chip { background: rgba(17,24,39,.06); border-color: rgba(17,24,39,.18); }
+		.t-minimal .logo,
+		.t-minimal .avatar,
+		.t-minimal .qr { background: rgba(17,24,39,.06); }
+		.t-minimal .back-footer .chip { background: rgba(17,24,39,.06); border-color: rgba(17,24,39,.18); }
+		.t-creative .card-accent-bar { width: 34px; }
+		.t-modern .card-accent-bar { width: 14px; opacity: .85; }
+		.t-corporate .card-accent-bar { width: 22px; }
+
+		/* Print: show only the card at true size */
+		@media print {
+			.no-print { display: none !important; }
+			html, body { margin: 0 !important; height: 100% !important; }
+			body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+			#printArea { display: block !important; }
+			#printArea .print-page {
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				break-after: page;
+				page-break-after: always;
+			}
+			#printArea .print-page:last-child {
+				break-after: auto;
+				page-break-after: auto;
+			}
+			#printArea .card-canvas {
+				width: 3.5in !important;
+				height: 2in !important;
+				box-shadow: none !important;
+			}
+			#printArea .card-inner { padding: 0.14in 0.16in !important; }
+			#printArea .card-back-inner { padding: 0.14in 0.16in !important; }
+			/* Convert left accent bar to fraction of inch for consistent print */
+			#printArea .card-accent-bar { width: 0.08in !important; }
+			/* Stack container is just a wrapper in print */
+			#printArea .print-stack { display: block; }
+		}
+
+		#printArea { display: none; }
+
+		.sample-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+		@media (max-width: 575.98px) {
+			.sample-grid { grid-template-columns: 1fr; }
+		}
+		.sample {
+			border: 1px solid var(--bs-border-color);
+			border-radius: 12px;
+			padding: 10px;
+			background: var(--bs-body-bg);
+			cursor: pointer;
+			transition: transform 180ms var(--ui-ease), box-shadow 180ms var(--ui-ease);
+		}
+		.sample:hover { transform: translateY(-2px); box-shadow: var(--bs-box-shadow-sm); }
+		.sample .thumb {
+			width: 100%;
+			height: 86px;
+			border-radius: 10px;
+			overflow: hidden;
+			display: grid;
+			grid-template-columns: 18px 1fr;
+		}
+		.sample .thumb .bar { background: var(--c, #2f80ed); }
+		.sample .thumb .body { background: var(--bg, #0b1f3a); color: var(--tx, #fff); padding: 10px; }
+		.sample .thumb .t1 { font-weight: 800; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.sample .thumb .t2 { opacity: .9; font-size: 10px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.sample .meta { margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+		.sample .meta .name { font-weight: 700; font-size: 12px; }
+		.sample .meta .badge { font-size: 11px; }
+
+		/* Landing / hero */
+		.hero {
+			position: relative;
+			overflow: hidden;
+			border-radius: 18px;
+			background:
+				radial-gradient(1200px 500px at 10% 10%, rgba(var(--bs-primary-rgb), .16), rgba(var(--bs-primary-rgb), 0)),
+				radial-gradient(900px 460px at 90% 70%, rgba(var(--bs-success-rgb), .14), rgba(var(--bs-success-rgb), 0)),
+				linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.35));
+			border: 1px solid rgba(0,0,0,.06);
+		}
+		.hero::after {
+			content: "";
+			position: absolute;
+			inset: -2px;
+			background:
+				radial-gradient(600px 300px at 35% 25%, rgba(var(--bs-primary-rgb), .22), rgba(var(--bs-primary-rgb), 0) 60%),
+				radial-gradient(560px 320px at 70% 65%, rgba(var(--bs-danger-rgb), .18), rgba(var(--bs-danger-rgb), 0) 60%);
+			filter: blur(18px);
+			opacity: .75;
+			animation: heroGlow 6s var(--ui-ease) infinite alternate;
+			pointer-events: none;
+		}
+		@keyframes heroGlow {
+			0% { transform: translate3d(-8px, -6px, 0) scale(1); }
+			100% { transform: translate3d(10px, 8px, 0) scale(1.03); }
+		}
+		.hero-inner { position: relative; z-index: 1; }
+		.hero-kicker {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 6px 12px;
+			border-radius: 999px;
+			background: rgba(var(--bs-primary-rgb), .10);
+			border: 1px solid rgba(var(--bs-primary-rgb), .18);
+			color: var(--bs-primary);
+			font-weight: 600;
+			font-size: 13px;
+		}
+		.hero-title { letter-spacing: -.4px; }
+		.hero-sub { max-width: 56ch; }
+		.float-stage {
+			position: relative;
+			min-height: 360px;
+		}
+		.mini-card {
+			position: absolute;
+			width: 420px;
+			height: 240px;
+			border-radius: 16px;
+			overflow: hidden;
+			box-shadow: 0 18px 45px rgba(0,0,0,.18);
+			transform-style: preserve-3d;
+			border: 1px solid rgba(0,0,0,.06);
+		}
+		.mini-card .bar { position: absolute; inset: 0 auto 0 0; width: 14px; background: var(--c); }
+		.mini-card .body { position: absolute; inset: 0; padding: 18px 18px 18px 26px; color: var(--tx); background: var(--bg); }
+		.mini-card .t1 { font-weight: 800; font-size: 20px; line-height: 1.1; }
+		.mini-card .t2 { opacity: .92; margin-top: 6px; }
+		.mini-card .t3 { opacity: .92; margin-top: 22px; font-size: 13px; }
+		.mini-card.card-a {
+			left: 8%;
+			top: 34px;
+			--bg: #0b1f3a; --tx: #fff; --c: #2f80ed;
+			animation: floatA 6.6s var(--ui-ease) infinite;
+			transform: rotate(-8deg);
+		}
+		.mini-card.card-b {
+			right: 6%;
+			top: 88px;
+			--bg: #0b0f19; --tx: #f8fafc; --c: #a78bfa;
+			animation: floatB 7.2s var(--ui-ease) infinite;
+			transform: rotate(10deg);
+		}
+		@keyframes floatA {
+			0%, 100% { transform: translate3d(0,0,0) rotate(-8deg); }
+			50% { transform: translate3d(0,-10px,0) rotate(-6deg); }
+		}
+		@keyframes floatB {
+			0%, 100% { transform: translate3d(0,0,0) rotate(10deg); }
+			50% { transform: translate3d(0,-12px,0) rotate(8deg); }
+		}
+		@media (max-width: 992px) {
+			.float-stage { min-height: 300px; }
+			.mini-card { width: 360px; height: 210px; }
+			.mini-card.card-a { left: 2%; }
+			.mini-card.card-b { right: 2%; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.hero::after, .mini-card { animation: none !important; }
+			.flip-inner, .card-canvas, .card-accent-bar, .detail i { transition: none !important; }
+		}
+	</style>
+</head>
+
+<body>
+	<!-- Landing view -->
+	<div id="landingView" class="container py-4 py-lg-5 no-print">
+		<div class="hero p-4 p-lg-5">
+			<div class="row g-4 align-items-center hero-inner">
+				<div class="col-12 col-lg-6">
+					<div class="hero-kicker mb-3"><i class="bi bi-stars"></i><span>Design. Preview. Export.</span></div>
+					<h1 class="display-6 fw-bold hero-title mb-3">Create an eye‑catching visiting card in minutes</h1>
+					<p class="lead text-body-secondary hero-sub mb-4">Enter your details, pick a template, customize colors and fonts, add your logo, and export a professional front/back card as PNG or PDF.</p>
+					<div class="d-flex flex-wrap gap-2">
+						<button id="btnStart" class="btn btn-primary btn-lg"><i class="bi bi-magic me-2"></i>Create Your Card</button>
+					</div>
+					<div class="d-flex flex-wrap gap-3 mt-4 text-body-secondary">
+						<div class="d-flex align-items-center gap-2"><i class="bi bi-lightning-charge"></i><span>Live preview</span></div>
+						<div class="d-flex align-items-center gap-2"><i class="bi bi-arrow-left-right"></i><span>Front &amp; back</span></div>
+						<div class="d-flex align-items-center gap-2"><i class="bi bi-download"></i><span>PNG/PDF export</span></div>
+						<div class="d-flex align-items-center gap-2"><i class="bi bi-qr-code"></i><span>Smart QR</span></div>
+					</div>
+				</div>
+				<div class="col-12 col-lg-6">
+					<div class="float-stage">
+						<div class="mini-card card-a" aria-hidden="true">
+							<div class="bar"></div>
+							<div class="body">
+								<div class="t1">Acme Studio</div>
+								<div class="t2">Jordan Lee • Business Development</div>
+								<div class="t3">acmestudio.com • jordan@acmestudio.com</div>
+							</div>
+						</div>
+						<div class="mini-card card-b" aria-hidden="true">
+							<div class="bar"></div>
+							<div class="body">
+								<div class="t1">Orion Labs</div>
+								<div class="t2">Sam Rivera • Software Engineer</div>
+								<div class="t3">orionlabs.io • sam@orionlabs.io</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Designer view -->
+	<div id="designerView" class="container-fluid py-4 no-print d-none">
+		<div class="row g-4">
+			<div class="col-12">
+				<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+					<div>
+						<h1 class="h3 mb-1 app-title">Visiting Card Designer</h1>
+						<div class="text-body-secondary">Customize, preview live, export to PNG/PDF.</div>
+					</div>
+					<div class="d-flex flex-wrap gap-2">
+						<button id="btnBackToLanding" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Landing</button>
+						<button id="btnPng" class="btn btn-primary"><i class="bi bi-image me-1"></i>Download PNG</button>
+						<button id="btnPdf" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>Download PDF</button>
+						<button id="btnSaveCustom" class="btn btn-outline-primary"><i class="bi bi-bookmark-plus me-1"></i>Save my Card</button>
+						<button id="btnShare" class="btn btn-outline-secondary"><i class="bi bi-link-45deg me-1"></i>Copy Share Link</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12 col-lg-5">
+				<div class="card shadow-sm">
+					<div class="card-body">
+						<div class="row g-3">
+							<div class="col-12">
+								<h2 class="h6 mb-2">Sample Designs</h2>
+								<div class="sample-grid" id="sampleGrid" aria-label="Sample designs">
+									<div class="sample" data-sample="0" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#0b1f3a;--tx:#ffffff;--c:#2f80ed;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Acme Studio</div>
+												<div class="t2">Corporate • Split</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">Corporate</div>
+											<span class="badge text-bg-primary">Load</span>
+										</div>
+									</div>
+									<div class="sample" data-sample="1" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#ffffff;--tx:#111827;--c:#111827;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Nova &amp; Co.</div>
+												<div class="t2">Minimal • Centered</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">Minimal</div>
+											<span class="badge text-bg-dark">Load</span>
+										</div>
+									</div>
+									<div class="sample" data-sample="2" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#1a103d;--tx:#ffffff;--c:#ff4d6d;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Pixel Bloom</div>
+												<div class="t2">Creative • Split</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">Creative</div>
+											<span class="badge text-bg-danger">Load</span>
+										</div>
+									</div>
+									<div class="sample" data-sample="3" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#0b0f19;--tx:#f8fafc;--c:#a78bfa;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Orion Labs</div>
+												<div class="t2">Dark • Classic</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">Dark</div>
+											<span class="badge text-bg-secondary">Load</span>
+										</div>
+									</div>
+									<div class="sample" data-sample="4" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#0b1f3a;--tx:#ffffff;--c:#2f80ed;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Karakoram Studio</div>
+												<div class="t2">No Photo • Split</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">No Photo</div>
+											<span class="badge text-bg-primary">Load</span>
+										</div>
+									</div>
+								</div>
+								<div class="text-body-secondary small mt-2">Click a sample to auto-fill and preview.</div>
+								<div id="customDesignsWrap" class="mt-3 d-none">
+									<h2 class="h6 mb-2">Custom Designs</h2>
+									<div class="sample-grid" id="customGrid" aria-label="Custom designs"></div>
+									<div class="text-body-secondary small mt-2">Saved in this browser. Click to load.</div>
+								</div>
+							</div>
+							<div class="col-12">
+								<div class="d-flex gap-2 flex-wrap">
+									<div class="flex-grow-1">
+										<label class="form-label">Template</label>
+										<select id="template" class="form-select">
+											<option value="corporate">Corporate</option>
+											<option value="minimal">Minimal</option>
+											<option value="creative">Creative</option>
+											<option value="modern">Modern</option>
+											<option value="dark">Dark theme</option>
+										</select>
+									</div>
+									<div class="flex-grow-1">
+										<label class="form-label">Layout</label>
+										<select id="layout" class="form-select">
+											<option value="classic-left">Classic (Left)</option>
+											<option value="centered">Centered</option>
+											<option value="split">Split</option>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2">User Information</h2>
+							</div>
+
+							<div class="col-sm-6">
+								<label class="form-label">Full Name</label>
+								<input id="fullName" class="form-control" placeholder="Jane Doe" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Job Title / Position</label>
+								<input id="jobTitle" class="form-control" placeholder="Product Manager" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Company Name</label>
+								<input id="company" class="form-control" placeholder="Acme Inc." />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Phone Number</label>
+								<input id="phone" class="form-control" placeholder="+1 (555) 123-4567" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Email</label>
+								<input id="email" type="email" class="form-control" placeholder="jane@acme.com" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Website</label>
+								<input id="website" class="form-control" placeholder="https://acme.com" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Address</label>
+								<input id="address" class="form-control" placeholder="123 Main St, City" />
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2 mt-2">Social Media Links</h2>
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">LinkedIn</label>
+								<input id="linkedin" class="form-control" placeholder="linkedin.com/in/..." />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">X (Twitter)</label>
+								<input id="twitter" class="form-control" placeholder="x.com/..." />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Instagram</label>
+								<input id="instagram" class="form-control" placeholder="instagram.com/..." />
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2 mt-2">Colors</h2>
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Background</label>
+								<input id="bgColor" type="color" class="form-control form-control-color" value="#0b1f3a" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Text</label>
+								<input id="textColor" type="color" class="form-control form-control-color" value="#ffffff" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Accent</label>
+								<input id="accentColor" type="color" class="form-control form-control-color" value="#2f80ed" />
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2 mt-2">Logo & Profile</h2>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Company Logo</label>
+								<input id="logoUpload" type="file" accept="image/*" class="form-control" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Profile Image</label>
+								<input id="avatarUpload" type="file" accept="image/*" class="form-control" />
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2 mt-2">Font & Style</h2>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Font</label>
+								<select id="fontFamily" class="form-select">
+									<option value="Inter">Inter</option>
+									<option value="Poppins">Poppins</option>
+									<option value="Montserrat">Montserrat</option>
+									<option value="Roboto">Roboto</option>
+									<option value="system">System Default</option>
+								</select>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Text Size</label>
+								<input id="fontSize" type="range" min="12" max="18" value="14" class="form-range" />
+							</div>
+							<div class="col-12">
+								<div class="d-flex flex-wrap gap-3">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="nameBold" checked />
+										<label class="form-check-label" for="nameBold">Bold name</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="titleItalic" />
+										<label class="form-check-label" for="titleItalic">Italic title</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="companyBold" checked />
+										<label class="form-check-label" for="companyBold">Bold company</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="col-12">
+								<h2 class="h6 mb-2 mt-2">QR Code (Advanced)</h2>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">QR Type</label>
+								<select id="qrType" class="form-select">
+									<option value="website">Website</option>
+									<option value="linkedin">LinkedIn</option>
+									<option value="portfolio">Digital portfolio (Website)</option>
+									<option value="vcard">vCard contact</option>
+								</select>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Show QR on card</label>
+								<div class="form-check form-switch mt-2">
+									<input class="form-check-input" type="checkbox" role="switch" id="qrEnabled" checked />
+									<label class="form-check-label" for="qrEnabled">Enabled</label>
+								</div>
+							</div>
+							<div class="col-12">
+								<div id="qrHelp" class="alert alert-light border mb-0 py-2 small">
+									QR uses your Website/LinkedIn fields, or a vCard built from your details.
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12 col-lg-7">
+				<div class="card shadow-sm position-sticky" style="top: 16px;">
+					<div class="card-body">
+						<div class="d-flex align-items-center justify-content-between mb-3">
+							<div>
+								<h2 class="h6 mb-0">Live Card Preview</h2>
+								<div class="text-body-secondary small">Flip to see front/back. Updates live.</div>
+							</div>
+							<div class="d-flex gap-2 align-items-center">
+								<div class="btn-group btn-group-sm" role="group" aria-label="Side toggle">
+									<button id="btnFront" class="btn btn-outline-secondary active" type="button">Front</button>
+									<button id="btnBack" class="btn btn-outline-secondary" type="button">Back</button>
+								</div>
+								<button id="btnFlip" class="btn btn-sm btn-outline-primary" type="button" title="Flip"><i class="bi bi-arrow-repeat"></i></button>
+							</div>
+						</div>
+
+						<div class="stage border rounded-3 p-3">
+							<div id="cardScale" class="card-scale">
+								<div class="flip-scene">
+									<div id="flipInner" class="flip-inner">
+										<div class="card-face front">
+											<div id="cardFront" class="card-canvas layout-classic-left t-corporate">
+												<div class="card-accent-bar" aria-hidden="true"></div>
+												<div class="card-inner">
+
+										<div class="brand">
+											<div class="logo" title="Company logo">
+												<img id="logoImg" alt="Logo" />
+												<i id="logoFallback" class="bi bi-building fallback-icon" style="font-size: 34px;"></i>
+											</div>
+											<div class="brand-text">
+												<div id="pCompany" class="company">Your Company</div>
+											</div>
+										</div>
+
+										<div class="person">
+											<div class="person-head">
+												<div class="avatar" title="Profile photo">
+													<img id="avatarImg" alt="Profile" />
+													<i id="avatarFallback" class="bi bi-person-circle fallback-icon" style="font-size: 36px;"></i>
+												</div>
+												<div class="person-text">
+													<div id="pName" class="full-name">Your Name</div>
+													<div id="pTitle" class="job-title"><span class="accent-dot" aria-hidden="true"></span><span id="pTitleText">Your title</span></div>
+												</div>
+											</div>
+										</div>
+
+										<div class="details">
+											<div id="dPhone" class="detail"><i class="bi bi-telephone"></i><div class="value" id="pPhone">+1 (555) 123-4567</div></div>
+											<div id="dEmail" class="detail"><i class="bi bi-envelope"></i><div class="value" id="pEmail">you@example.com</div></div>
+											<div id="dWeb" class="detail"><i class="bi bi-globe2"></i><div class="value" id="pWebsite">example.com</div></div>
+											<div id="dAddr" class="detail"><i class="bi bi-geo-alt"></i><div class="value" id="pAddress">City, Country</div></div>
+										</div>
+
+										<div class="social" id="pSocial">
+											<div class="chip" id="sLinkedIn"><i class="bi bi-linkedin"></i><span id="pLinkedIn">linkedin.com</span></div>
+											<div class="chip" id="sTwitter"><i class="bi bi-twitter-x"></i><span id="pTwitter">x.com</span></div>
+											<div class="chip" id="sInstagram"><i class="bi bi-instagram"></i><span id="pInstagram">instagram.com</span></div>
+										</div>
+
+												<div id="qrWrap" class="qr" aria-label="QR code">
+													<div id="qr"></div>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="card-face back">
+										<div id="cardBack" class="card-canvas t-corporate">
+											<div class="back-mark" aria-hidden="true"></div>
+											<div class="card-back-inner">
+												<div class="back-brand">
+													<div class="logo" title="Company logo">
+														<img id="logoImgBack" alt="Logo" />
+														<i id="logoFallbackBack" class="bi bi-building fallback-icon" style="font-size: 34px;"></i>
+													</div>
+													<div class="brand-text" style="min-width:0;">
+														<div id="bCompany" class="back-company">Your Company</div>
+														<div id="bTag" class="back-line">Professional services • Since 2026</div>
+													</div>
+												</div>
+
+												<div style="align-self:center;">
+													<div class="back-accent" aria-hidden="true"></div>
+												</div>
+
+												<div class="back-footer">
+													<div class="social" style="gap:10px;">
+														<div class="chip" id="bWebChip"><i class="bi bi-globe2"></i><span id="bWebsite">example.com</span></div>
+														<div class="chip" id="bEmailChip"><i class="bi bi-envelope"></i><span id="bEmail">you@example.com</span></div>
+													</div>
+													<div id="qrWrapBack" class="qr" aria-label="QR code back">
+														<div id="qrBack"></div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						</div>
+
+						<div class="text-body-secondary small mt-3">Tip: PDF exports both sides; PNG exports the current side.</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Hidden print area (same DOM is re-used by print CSS) -->
+	<div id="printArea" aria-hidden="true">
+		<!-- the existing #card is printed; this container only helps CSS scoping -->
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+	<script>
+		const $ = (id) => document.getElementById(id);
+
+		const els = {
+			landingView: $('landingView'),
+			designerView: $('designerView'),
+			btnStart: $('btnStart'),
+			btnBackToLanding: $('btnBackToLanding'),
+			btnSaveCustom: $('btnSaveCustom'),
+			customDesignsWrap: $('customDesignsWrap'),
+			customGrid: $('customGrid'),
+			template: $('template'),
+			layout: $('layout'),
+			fullName: $('fullName'),
+			jobTitle: $('jobTitle'),
+			company: $('company'),
+			phone: $('phone'),
+			email: $('email'),
+			website: $('website'),
+			address: $('address'),
+			linkedin: $('linkedin'),
+			twitter: $('twitter'),
+			instagram: $('instagram'),
+			bgColor: $('bgColor'),
+			textColor: $('textColor'),
+			accentColor: $('accentColor'),
+			logoUpload: $('logoUpload'),
+			avatarUpload: $('avatarUpload'),
+			fontFamily: $('fontFamily'),
+			fontSize: $('fontSize'),
+			nameBold: $('nameBold'),
+			titleItalic: $('titleItalic'),
+			companyBold: $('companyBold'),
+			qrType: $('qrType'),
+			qrEnabled: $('qrEnabled'),
+			btnPng: $('btnPng'),
+			btnPdf: $('btnPdf'),
+			btnShare: $('btnShare'),
+			btnFront: $('btnFront'),
+			btnBack: $('btnBack'),
+			btnFlip: $('btnFlip'),
+			flipInner: $('flipInner'),
+			cardFront: $('cardFront'),
+			cardBack: $('cardBack'),
+			cardScale: $('cardScale'),
+			printArea: $('printArea'),
+			qr: $('qr'),
+			qrWrap: $('qrWrap'),
+			qrBack: $('qrBack'),
+			qrWrapBack: $('qrWrapBack'),
+			qrHelp: $('qrHelp')
+		};
+
+		function hasSharedHash() {
+			const hash = (location.hash || '').replace(/^#/, '');
+			return hash.startsWith('data=');
+		}
+
+		function clearShareHash() {
+			if (!location.hash) return;
+			const url = location.pathname + location.search;
+			history.replaceState(null, '', url);
+		}
+
+		function showLanding({ clearHash = false } = {}) {
+			if (clearHash) clearShareHash();
+			els.landingView?.classList.remove('d-none');
+			els.designerView?.classList.add('d-none');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+
+		function showDesigner() {
+			els.landingView?.classList.add('d-none');
+			els.designerView?.classList.remove('d-none');
+			requestScale();
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+
+		const preview = {
+			pName: $('pName'),
+			pTitleText: $('pTitleText'),
+			pCompany: $('pCompany'),
+			pPhone: $('pPhone'),
+			pEmail: $('pEmail'),
+			pWebsite: $('pWebsite'),
+			pAddress: $('pAddress'),
+			pLinkedIn: $('pLinkedIn'),
+			pTwitter: $('pTwitter'),
+			pInstagram: $('pInstagram'),
+			dPhone: $('dPhone'),
+			dEmail: $('dEmail'),
+			dWeb: $('dWeb'),
+			dAddr: $('dAddr'),
+			sLinkedIn: $('sLinkedIn'),
+			sTwitter: $('sTwitter'),
+			sInstagram: $('sInstagram'),
+			logoImg: $('logoImg'),
+			logoImgBack: $('logoImgBack'),
+			avatarImg: $('avatarImg'),
+			logoFallback: $('logoFallback'),
+			logoFallbackBack: $('logoFallbackBack'),
+			avatarFallback: $('avatarFallback')
+		};
+
+		const back = {
+			bCompany: $('bCompany'),
+			bTag: $('bTag'),
+			bWebsite: $('bWebsite'),
+			bEmail: $('bEmail'),
+			bWebChip: $('bWebChip'),
+			bEmailChip: $('bEmailChip')
+		};
+
+		const templates = {
+			corporate: {
+				bg: '#0b1f3a',
+				text: '#ffffff',
+				accent: '#2f80ed',
+				font: 'Inter',
+				layout: 'classic-left',
+				className: 't-corporate'
+			},
+			minimal: {
+				bg: '#ffffff',
+				text: '#111827',
+				accent: '#111827',
+				font: 'Montserrat',
+				layout: 'centered',
+				className: 't-minimal'
+			},
+			creative: {
+				bg: '#1a103d',
+				text: '#ffffff',
+				accent: '#ff4d6d',
+				font: 'Poppins',
+				layout: 'split',
+				className: 't-creative'
+			},
+			modern: {
+				bg: '#0f172a',
+				text: '#e2e8f0',
+				accent: '#22c55e',
+				font: 'Inter',
+				layout: 'split',
+				className: 't-modern'
+			},
+			dark: {
+				bg: '#0b0f19',
+				text: '#f8fafc',
+				accent: '#a78bfa',
+				font: 'Roboto',
+				layout: 'classic-left',
+				className: 't-dark'
+			}
+		};
+
+		function normalizeUrl(value) {
+			const v = (value || '').trim();
+			if (!v) return '';
+			if (v.startsWith('http://') || v.startsWith('https://')) return v;
+			return 'https://' + v;
+		}
+
+		function setCssVars({ bg, text, accent, fontFamily, fontSizePx }) {
+			const root = document.documentElement;
+			if (bg) root.style.setProperty('--card-bg', bg);
+			if (text) root.style.setProperty('--card-text', text);
+			if (accent) root.style.setProperty('--card-accent', accent);
+			if (fontFamily) root.style.setProperty('--card-font', fontFamily);
+			if (fontSizePx) root.style.setProperty('--card-font-size', fontSizePx);
+		}
+
+		function fontCssFromSelect(value) {
+			switch (value) {
+				case 'Inter': return 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+				case 'Poppins': return 'Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+				case 'Montserrat': return 'Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+				case 'Roboto': return 'Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif';
+				default: return 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+			}
+		}
+
+		function applyLayout(layout) {
+			els.cardFront.classList.remove('layout-classic-left', 'layout-centered', 'layout-split');
+			if (layout === 'centered') els.cardFront.classList.add('layout-centered');
+			else if (layout === 'split') els.cardFront.classList.add('layout-split');
+			else els.cardFront.classList.add('layout-classic-left');
+		}
+
+		function applyTemplate(templateKey) {
+			const t = templates[templateKey] || templates.corporate;
+
+			els.bgColor.value = t.bg;
+			els.textColor.value = t.text;
+			els.accentColor.value = t.accent;
+			els.fontFamily.value = t.font;
+			els.layout.value = t.layout;
+
+			setCssVars({
+				bg: t.bg,
+				text: t.text,
+				accent: t.accent,
+				fontFamily: fontCssFromSelect(t.font)
+			});
+
+			applyLayout(t.layout);
+			els.cardFront.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
+			els.cardBack.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
+			els.cardFront.classList.add(t.className);
+			els.cardBack.classList.add(t.className);
+		}
+
+		function hideIfEmpty(containerEl, value) {
+			containerEl.style.display = value ? '' : 'none';
+		}
+
+		let qrInstance = null;
+		let qrInstanceBack = null;
+		function buildVCard() {
+			const name = (els.fullName.value || '').trim();
+			const org = (els.company.value || '').trim();
+			const title = (els.jobTitle.value || '').trim();
+			const phone = (els.phone.value || '').trim();
+			const email = (els.email.value || '').trim();
+			const url = normalizeUrl(els.website.value);
+			const adr = (els.address.value || '').trim();
+
+			const lines = [
+				'BEGIN:VCARD',
+				'VERSION:3.0',
+			];
+			if (name) lines.push('FN:' + name);
+			if (org) lines.push('ORG:' + org);
+			if (title) lines.push('TITLE:' + title);
+			if (phone) lines.push('TEL;TYPE=CELL:' + phone);
+			if (email) lines.push('EMAIL:' + email);
+			if (url) lines.push('URL:' + url);
+			if (adr) lines.push('ADR;TYPE=WORK:;;' + adr + ';;;;');
+			lines.push('END:VCARD');
+
+			return lines.join('\n');
+		}
+
+		function qrPayload() {
+			const type = els.qrType.value;
+			if (type === 'linkedin') return normalizeUrl(els.linkedin.value);
+			if (type === 'vcard') return buildVCard();
+			// website + portfolio both use website
+			return normalizeUrl(els.website.value);
+		}
+
+		function updateQr() {
+			const enabled = els.qrEnabled.checked;
+			els.qrWrap.classList.toggle('hidden', !enabled);
+			els.qrWrapBack.classList.toggle('hidden', !enabled);
+			if (!enabled) return;
+
+			const payload = qrPayload();
+			const help = els.qrHelp;
+
+			if (!payload) {
+				help.classList.remove('alert-light');
+				help.classList.add('alert-warning');
+				help.textContent = 'QR content is empty. Fill Website/LinkedIn, or enter basic details for vCard.';
+				els.qr.innerHTML = '';
+				els.qrBack.innerHTML = '';
+				qrInstance = null;
+				qrInstanceBack = null;
+				return;
+			}
+
+			help.classList.remove('alert-warning');
+			help.classList.add('alert-light');
+			help.textContent = 'QR uses your Website/LinkedIn fields, or a vCard built from your details.';
+
+			els.qr.innerHTML = '';
+			els.qrBack.innerHTML = '';
+			qrInstance = new QRCode(els.qr, {
+				text: payload,
+				width: 118,
+				height: 118,
+				colorDark: '#000000',
+				colorLight: '#ffffff',
+				correctLevel: QRCode.CorrectLevel.M
+			});
+			qrInstanceBack = new QRCode(els.qrBack, {
+				text: payload,
+				width: 118,
+				height: 118,
+				colorDark: '#000000',
+				colorLight: '#ffffff',
+				correctLevel: QRCode.CorrectLevel.M
+			});
+		}
+
+		function updatePreview() {
+			const name = (els.fullName.value || '').trim();
+			const title = (els.jobTitle.value || '').trim();
+			const company = (els.company.value || '').trim();
+
+			const phone = (els.phone.value || '').trim();
+			const email = (els.email.value || '').trim();
+			const web = (els.website.value || '').trim();
+			const address = (els.address.value || '').trim();
+
+			const linkedin = (els.linkedin.value || '').trim();
+			const twitter = (els.twitter.value || '').trim();
+			const instagram = (els.instagram.value || '').trim();
+
+			preview.pName.textContent = name || 'Your Name';
+			preview.pTitleText.textContent = title || 'Your title';
+			preview.pCompany.textContent = company || 'Your Company';
+			back.bCompany.textContent = company || 'Your Company';
+			back.bTag.textContent = title ? title : 'Professional services • Since 2026';
+
+			preview.pPhone.textContent = phone || '+1 (555) 123-4567';
+			preview.pEmail.textContent = email || 'you@example.com';
+			preview.pWebsite.textContent = web || 'example.com';
+			preview.pAddress.textContent = address || 'City, Country';
+
+			hideIfEmpty(preview.dPhone, phone);
+			hideIfEmpty(preview.dEmail, email);
+			hideIfEmpty(preview.dWeb, web);
+			hideIfEmpty(preview.dAddr, address);
+
+			back.bWebsite.textContent = web || 'example.com';
+			back.bEmail.textContent = email || 'you@example.com';
+			hideIfEmpty(back.bWebChip, web);
+			hideIfEmpty(back.bEmailChip, email);
+
+			preview.pLinkedIn.textContent = linkedin || 'linkedin.com';
+			preview.pTwitter.textContent = twitter || 'x.com';
+			preview.pInstagram.textContent = instagram || 'instagram.com';
+			hideIfEmpty(preview.sLinkedIn, linkedin);
+			hideIfEmpty(preview.sTwitter, twitter);
+			hideIfEmpty(preview.sInstagram, instagram);
+
+			// Font & style toggles
+			preview.pName.style.fontWeight = els.nameBold.checked ? '700' : '500';
+			preview.pTitleText.style.fontStyle = els.titleItalic.checked ? 'italic' : 'normal';
+			preview.pCompany.style.fontWeight = els.companyBold.checked ? '700' : '600';
+
+			setCssVars({
+				bg: els.bgColor.value,
+				text: els.textColor.value,
+				accent: els.accentColor.value,
+				fontFamily: fontCssFromSelect(els.fontFamily.value),
+				fontSizePx: (Number(els.fontSize.value) || 14) + 'px'
+			});
+
+			applyLayout(els.layout.value);
+			updateQr();
+			requestScale();
+			pulsePreview();
+		}
+
+		let pulseT = null;
+		function pulsePreview() {
+			if (pulseT) return;
+			pulseT = setTimeout(() => {
+				pulseT = null;
+				els.cardFront.classList.remove('pop');
+				els.cardBack.classList.remove('pop');
+				void els.cardFront.offsetWidth;
+				els.cardFront.classList.add('pop');
+				els.cardBack.classList.add('pop');
+			}, 120);
+		}
+
+		function readImage(file, targetImgEl, fallbackIconEl) {
+			if (!file) {
+				targetImgEl.style.display = 'none';
+				fallbackIconEl.style.display = '';
+				targetImgEl.removeAttribute('src');
+				return;
+			}
+			const reader = new FileReader();
+			reader.onload = () => {
+				targetImgEl.src = reader.result;
+				targetImgEl.style.display = 'block';
+				fallbackIconEl.style.display = 'none';
+			};
+			reader.readAsDataURL(file);
+		}
+
+		let scaleRaf = null;
+		function requestScale() {
+			if (scaleRaf) return;
+			scaleRaf = requestAnimationFrame(() => {
+				scaleRaf = null;
+				scalePreviewToFit();
+			});
+		}
+
+		function scalePreviewToFit() {
+			const stage = els.cardScale?.parentElement;
+			if (!stage) return;
+			const maxW = stage.clientWidth - 24;
+			const maxH = stage.clientHeight - 24;
+			const w = els.cardFront.offsetWidth;
+			const h = els.cardFront.offsetHeight;
+			const s = Math.min(maxW / w, maxH / h, 1);
+			els.cardScale.style.transform = `translate(-50%, -50%) scale(${s})`;
+		}
+
+		function showingBack() {
+			return els.flipInner.classList.contains('is-flipped');
+		}
+		function showFront() {
+			els.flipInner.classList.remove('is-flipped');
+			els.btnFront.classList.add('active');
+			els.btnBack.classList.remove('active');
+		}
+		function showBack() {
+			els.flipInner.classList.add('is-flipped');
+			els.btnBack.classList.add('active');
+			els.btnFront.classList.remove('active');
+		}
+		function toggleFlip() {
+			if (showingBack()) showFront();
+			else showBack();
+		}
+		function activeCardEl() {
+			return showingBack() ? els.cardBack : els.cardFront;
+		}
+
+		function setAvatarHidden(hidden) {
+			els.cardFront.classList.toggle('no-avatar', !!hidden);
+		}
+
+		const CUSTOM_KEY = 'visitingCard.customDesigns.v1';
+		function getCustomDesigns() {
+			try {
+				const raw = localStorage.getItem(CUSTOM_KEY);
+				const parsed = raw ? JSON.parse(raw) : [];
+				return Array.isArray(parsed) ? parsed : [];
+			} catch {
+				return [];
+			}
+		}
+		function setCustomDesigns(arr) {
+			try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(arr || [])); } catch { /* ignore */ }
+		}
+		function escapeHtml(s) {
+			return String(s || '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+		}
+		function renderCustomDesigns() {
+			const list = getCustomDesigns();
+			if (!els.customGrid || !els.customDesignsWrap) return;
+			els.customGrid.innerHTML = '';
+			els.customDesignsWrap.classList.toggle('d-none', list.length === 0);
+			list.forEach((item) => {
+				const tile = document.createElement('div');
+				tile.className = 'sample';
+				tile.setAttribute('role', 'button');
+				tile.setAttribute('tabindex', '0');
+				tile.setAttribute('data-custom-id', item.id);
+				const bg = item.state?.bgColor || '#0b1f3a';
+				const tx = item.state?.textColor || '#ffffff';
+				const c = item.state?.accentColor || '#2f80ed';
+				tile.innerHTML = `
+					<div class="thumb" style="--bg:${bg};--tx:${tx};--c:${c};">
+						<div class="bar"></div>
+						<div class="body">
+							<div class="t1">${escapeHtml(item.state?.company || 'Custom')}</div>
+							<div class="t2">${escapeHtml(item.name || 'Custom')}</div>
+						</div>
+					</div>
+					<div class="meta">
+						<div class="name">${escapeHtml(item.name || 'Custom')}</div>
+						<div class="d-flex gap-2">
+							<span class="badge text-bg-primary">Load</span>
+							<button type="button" class="btn btn-sm btn-outline-danger" data-action="delete" data-custom-id="${escapeHtml(item.id)}"><i class="bi bi-trash me-1"></i>Delete</button>
+						</div>
+					</div>
+				`;
+				els.customGrid.appendChild(tile);
+			});
+		}
+		function saveCustomDesign() {
+			const name = (window.prompt('Name this custom design:', 'My Design') || '').trim();
+			if (!name) return;
+			const list = getCustomDesigns();
+			list.unshift({ id: 'c_' + Date.now(), name, state: currentState() });
+			setCustomDesigns(list.slice(0, 12));
+			renderCustomDesigns();
+		}
+		function loadCustomDesign(id) {
+			const list = getCustomDesigns();
+			const item = list.find((x) => x.id === id);
+			if (!item) return;
+			applyState(item.state);
+			showFront();
+			requestScale();
+		}
+
+		function deleteCustomDesign(id) {
+			const list = getCustomDesigns();
+			const next = list.filter((x) => x.id !== id);
+			setCustomDesigns(next);
+			renderCustomDesigns();
+		}
+
+		function currentState() {
+			return {
+				template: els.template.value,
+				layout: els.layout.value,
+				fullName: els.fullName.value,
+				jobTitle: els.jobTitle.value,
+				company: els.company.value,
+				phone: els.phone.value,
+				email: els.email.value,
+				website: els.website.value,
+				address: els.address.value,
+				linkedin: els.linkedin.value,
+				twitter: els.twitter.value,
+				instagram: els.instagram.value,
+				bgColor: els.bgColor.value,
+				textColor: els.textColor.value,
+				accentColor: els.accentColor.value,
+				fontFamily: els.fontFamily.value,
+				fontSize: els.fontSize.value,
+				nameBold: els.nameBold.checked,
+				titleItalic: els.titleItalic.checked,
+				companyBold: els.companyBold.checked,
+				qrType: els.qrType.value,
+				qrEnabled: els.qrEnabled.checked,
+				hideAvatar: els.cardFront.classList.contains('no-avatar')
+			};
+		}
+
+		function applyState(s) {
+			if (!s || typeof s !== 'object') return;
+			if (s.template && templates[s.template]) els.template.value = s.template;
+			// First apply the template defaults, then overwrite with shared custom values.
+			applyTemplate(els.template.value);
+			setAvatarHidden(!!s.hideAvatar);
+
+			if (s.layout) els.layout.value = s.layout;
+			const setVal = (el, v) => { if (v !== undefined && v !== null) el.value = String(v); };
+			setVal(els.fullName, s.fullName);
+			setVal(els.jobTitle, s.jobTitle);
+			setVal(els.company, s.company);
+			setVal(els.phone, s.phone);
+			setVal(els.email, s.email);
+			setVal(els.website, s.website);
+			setVal(els.address, s.address);
+			setVal(els.linkedin, s.linkedin);
+			setVal(els.twitter, s.twitter);
+			setVal(els.instagram, s.instagram);
+			setVal(els.bgColor, s.bgColor);
+			setVal(els.textColor, s.textColor);
+			setVal(els.accentColor, s.accentColor);
+			if (s.fontFamily) els.fontFamily.value = s.fontFamily;
+			if (s.fontSize) els.fontSize.value = String(s.fontSize);
+			if (typeof s.nameBold === 'boolean') els.nameBold.checked = s.nameBold;
+			if (typeof s.titleItalic === 'boolean') els.titleItalic.checked = s.titleItalic;
+			if (typeof s.companyBold === 'boolean') els.companyBold.checked = s.companyBold;
+			if (s.qrType) els.qrType.value = s.qrType;
+			if (typeof s.qrEnabled === 'boolean') els.qrEnabled.checked = s.qrEnabled;
+			updatePreview();
+		}
+
+		function preparePrintDom() {
+			// Clone both sides into the print-only container.
+			els.printArea.innerHTML = '';
+			const wrap = document.createElement('div');
+			wrap.className = 'print-stack';
+
+			const frontClone = els.cardFront.cloneNode(true);
+			frontClone.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+			const backClone = els.cardBack.cloneNode(true);
+			backClone.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+
+			const frontPage = document.createElement('div');
+			frontPage.className = 'print-page';
+			frontPage.appendChild(frontClone);
+			const backPage = document.createElement('div');
+			backPage.className = 'print-page';
+			backPage.appendChild(backClone);
+
+			wrap.appendChild(frontPage);
+			wrap.appendChild(backPage);
+			els.printArea.appendChild(wrap);
+		}
+
+		function clearPrintDom() {
+			els.printArea.innerHTML = '';
+		}
+
+		function encodeStateToHash() {
+			const json = JSON.stringify(currentState());
+			const b64 = btoa(unescape(encodeURIComponent(json)));
+			location.hash = 'data=' + b64;
+			return location.href;
+		}
+
+		function tryLoadStateFromHash() {
+			const hash = (location.hash || '').replace(/^#/, '');
+			if (!hash.startsWith('data=')) return;
+			const b64 = hash.slice(5);
+			try {
+				const json = decodeURIComponent(escape(atob(b64)));
+				const s = JSON.parse(json);
+				applyState(s);
+			} catch {
+				// ignore invalid share links
+			}
+		}
+
+		async function exportPng() {
+			const canvas = await renderCardToCanvas(activeCardEl());
+
+			const a = document.createElement('a');
+			a.href = canvas.toDataURL('image/png');
+			a.download = showingBack() ? 'visiting-card-back.png' : 'visiting-card-front.png';
+			a.click();
+		}
+
+		async function renderCardToCanvas(cardEl) {
+			const container = document.createElement('div');
+			container.style.position = 'fixed';
+			container.style.left = '-10000px';
+			container.style.top = '0';
+			container.style.width = '1050px';
+			container.style.height = '600px';
+			container.style.zIndex = '-1';
+			container.style.pointerEvents = 'none';
+
+			const clone = cardEl.cloneNode(true);
+			clone.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+			container.appendChild(clone);
+			document.body.appendChild(container);
+
+			await new Promise(requestAnimationFrame);
+			const canvas = await html2canvas(clone, {
+				backgroundColor: null,
+				scale: 2,
+				useCORS: true
+			});
+			document.body.removeChild(container);
+			return canvas;
+		}
+
+		async function exportPdf() {
+			const frontCanvas = await renderCardToCanvas(els.cardFront);
+			const backCanvas = await renderCardToCanvas(els.cardBack);
+			const frontPng = frontCanvas.toDataURL('image/png');
+			const backPng = backCanvas.toDataURL('image/png');
+
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF({ orientation: 'landscape', unit: 'in', format: [3.5, 2] });
+			doc.addImage(frontPng, 'PNG', 0, 0, 3.5, 2);
+			doc.addPage([3.5, 2], 'landscape');
+			doc.addImage(backPng, 'PNG', 0, 0, 3.5, 2);
+			doc.save('visiting-card.pdf');
+		}
+
+		async function copyShareLink() {
+			const url = encodeStateToHash();
+			try {
+				await navigator.clipboard.writeText(url);
+				els.btnShare.textContent = 'Copied!';
+				setTimeout(() => { els.btnShare.innerHTML = '<i class="bi bi-link-45deg me-1"></i>Copy Share Link'; }, 1400);
+			} catch {
+				// Fallback: prompt
+				window.prompt('Copy this link:', url);
+			}
+		}
+
+		function wire() {
+			// Inputs that update preview
+			const liveInputs = [
+				els.fullName, els.jobTitle, els.company,
+				els.phone, els.email, els.website, els.address,
+				els.linkedin, els.twitter, els.instagram,
+				els.bgColor, els.textColor, els.accentColor,
+				els.fontFamily, els.fontSize,
+				els.nameBold, els.titleItalic, els.companyBold,
+				els.layout, els.qrType, els.qrEnabled
+			];
+			liveInputs.forEach((el) => {
+				el.addEventListener('input', updatePreview);
+				el.addEventListener('change', updatePreview);
+			});
+
+			els.template.addEventListener('change', () => {
+				applyTemplate(els.template.value);
+				updatePreview();
+			});
+
+			// Auto-enable & update QR when user enters links
+			els.website.addEventListener('input', () => {
+				const v = (els.website.value || '').trim();
+				if (!v) return;
+				if (els.qrType.value !== 'website' && els.qrType.value !== 'portfolio') {
+					els.qrType.value = 'website';
+				}
+				els.qrEnabled.checked = true;
+				updateQr();
+			});
+			els.linkedin.addEventListener('input', () => {
+				const v = (els.linkedin.value || '').trim();
+				if (!v) return;
+				els.qrType.value = 'linkedin';
+				els.qrEnabled.checked = true;
+				updateQr();
+			});
+
+			els.logoUpload.addEventListener('change', () => {
+				readImage(els.logoUpload.files?.[0], preview.logoImg, preview.logoFallback);
+				readImage(els.logoUpload.files?.[0], preview.logoImgBack, preview.logoFallbackBack);
+			});
+			els.btnFront?.addEventListener('click', showFront);
+			els.btnBack?.addEventListener('click', showBack);
+			els.btnFlip?.addEventListener('click', toggleFlip);
+			els.avatarUpload.addEventListener('change', () => {
+				if (els.avatarUpload.files?.[0]) setAvatarHidden(false);
+				readImage(els.avatarUpload.files?.[0], preview.avatarImg, preview.avatarFallback);
+			});
+
+			els.btnPng.addEventListener('click', exportPng);
+			els.btnPdf.addEventListener('click', exportPdf);
+			els.btnShare.addEventListener('click', copyShareLink);
+
+			// Samples
+			const sampleGrid = document.getElementById('sampleGrid');
+			sampleGrid?.addEventListener('click', (e) => {
+				const node = e.target.closest?.('.sample');
+				if (!node) return;
+				const idx = Number(node.getAttribute('data-sample'));
+				loadSample(idx);
+			});
+			sampleGrid?.addEventListener('keydown', (e) => {
+				if (e.key !== 'Enter' && e.key !== ' ') return;
+				const node = e.target.closest?.('.sample');
+				if (!node) return;
+				e.preventDefault();
+				const idx = Number(node.getAttribute('data-sample'));
+				loadSample(idx);
+			});
+
+			window.addEventListener('afterprint', clearPrintDom);
+			els.btnSaveCustom?.addEventListener('click', saveCustomDesign);
+
+			els.btnStart?.addEventListener('click', () => {
+				showDesigner();
+			});
+			els.btnBackToLanding?.addEventListener('click', () => {
+				showLanding({ clearHash: true });
+			});
+
+			window.addEventListener('hashchange', () => {
+				if (hasSharedHash()) {
+					tryLoadStateFromHash();
+					showDesigner();
+				}
+			});
+
+			els.customGrid?.addEventListener('click', (e) => {
+				const delBtn = e.target.closest?.('[data-action="delete"]');
+				if (delBtn) {
+					const id = delBtn.getAttribute('data-custom-id');
+					if (!id) return;
+					const ok = window.confirm('Delete this saved design?');
+					if (!ok) return;
+					deleteCustomDesign(id);
+					return;
+				}
+				const node = e.target.closest?.('.sample');
+				if (!node) return;
+				const id = node.getAttribute('data-custom-id');
+				if (!id) return;
+				loadCustomDesign(id);
+			});
+			els.customGrid?.addEventListener('keydown', (e) => {
+				if (e.key !== 'Enter' && e.key !== ' ') return;
+				const node = e.target.closest?.('.sample');
+				if (!node) return;
+				e.preventDefault();
+				const id = node.getAttribute('data-custom-id');
+				if (!id) return;
+				loadCustomDesign(id);
+			});
+
+			window.addEventListener('resize', requestScale);
+		}
+
+		const samples = [
+			{
+				template: 'corporate',
+				layout: 'split',
+				fullName: 'Jordan Lee',
+				jobTitle: 'Business Development',
+				company: 'Acme Studio',
+				phone: '+1 (415) 555-0136',
+				email: 'jordan@acmestudio.com',
+				website: 'acmestudio.com',
+				address: 'Market St, San Francisco',
+				linkedin: 'linkedin.com/in/jordanlee',
+				bgColor: '#0b1f3a',
+				textColor: '#ffffff',
+				accentColor: '#2f80ed',
+				fontFamily: 'Inter',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: false,
+				companyBold: true,
+				qrType: 'website',
+				qrEnabled: true
+			},
+			{
+				template: 'minimal',
+				layout: 'centered',
+				fullName: 'Ava Chen',
+				jobTitle: 'UX Designer',
+				company: 'Nova & Co.',
+				phone: '+44 20 7946 0958',
+				email: 'ava@nova.co',
+				website: 'nova.co',
+				address: 'London, UK',
+				instagram: 'instagram.com/ava.designs',
+				bgColor: '#ffffff',
+				textColor: '#111827',
+				accentColor: '#111827',
+				fontFamily: 'Montserrat',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: true,
+				companyBold: true,
+				qrType: 'vcard',
+				qrEnabled: true
+			},
+			{
+				template: 'creative',
+				layout: 'split',
+				fullName: 'Maya Patel',
+				jobTitle: 'Creative Director',
+				company: 'Pixel Bloom',
+				phone: '+92 300 123 4567',
+				email: 'hello@pixelbloom.pk',
+				website: 'pixelbloom.pk',
+				address: 'Lahore, PK',
+				twitter: 'x.com/pixelbloom',
+				bgColor: '#1a103d',
+				textColor: '#ffffff',
+				accentColor: '#ff4d6d',
+				fontFamily: 'Poppins',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: false,
+				companyBold: true,
+				qrType: 'portfolio',
+				qrEnabled: true
+			},
+			{
+				template: 'dark',
+				layout: 'classic-left',
+				fullName: 'Sam Rivera',
+				jobTitle: 'Software Engineer',
+				company: 'Orion Labs',
+				phone: '+1 (212) 555-0199',
+				email: 'sam@orionlabs.io',
+				website: 'orionlabs.io',
+				address: 'New York, USA',
+				linkedin: 'linkedin.com/company/orionlabs',
+				bgColor: '#0b0f19',
+				textColor: '#f8fafc',
+				accentColor: '#a78bfa',
+				fontFamily: 'Roboto',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: false,
+				companyBold: true,
+				qrType: 'linkedin',
+				qrEnabled: true
+			},
+			{
+				template: 'corporate',
+				layout: 'split',
+				fullName: 'Ayesha Khan',
+				jobTitle: 'Marketing Lead',
+				company: 'Karakoram Studio',
+				phone: '+92 301 234 5678',
+				email: 'ayesha@karakoramstudio.pk',
+				website: 'karakoramstudio.pk',
+				address: 'Islamabad, PK',
+				linkedin: 'linkedin.com/in/ayeshakhan',
+				bgColor: '#0b1f3a',
+				textColor: '#ffffff',
+				accentColor: '#2f80ed',
+				fontFamily: 'Inter',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: false,
+				companyBold: true,
+				qrType: 'website',
+				qrEnabled: true,
+				hideAvatar: true
+			}
+		];
+
+		function loadSample(idx) {
+			const s = samples[idx];
+			if (!s) return;
+			applyState(s);
+			showFront();
+			requestScale();
+		}
+
+		// Init
+		wire();
+		applyTemplate('corporate');
+		tryLoadStateFromHash();
+		updatePreview();
+		requestScale();
+		renderCustomDesigns();
+		if (hasSharedHash()) showDesigner();
+		else showLanding();
+	</script>
+</body>
+</html>

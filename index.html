@@ -19,6 +19,8 @@
 			--card-accent: #2f80ed;
 			--card-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 			--card-font-size: 14px;
+			--card-letter-spacing: 0px;
+			--card-line-height: 1.3;
 			--ui-ease: cubic-bezier(.2,.8,.2,1);
 		}
 
@@ -77,10 +79,36 @@
 			color: var(--card-text);
 			font-family: var(--card-font);
 			font-size: var(--card-font-size);
+			letter-spacing: var(--card-letter-spacing);
+			line-height: var(--card-line-height);
 			box-shadow: var(--bs-box-shadow);
 			user-select: none;
 			position: relative;
 			transition: background-color 250ms var(--ui-ease), color 250ms var(--ui-ease);
+		}
+		.card-bg-image,
+		.card-bg-texture,
+		.card-bg-overlay {
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+		}
+		.card-bg-image {
+			z-index: 0;
+			background-position: center;
+			background-size: cover;
+			background-repeat: no-repeat;
+			opacity: 0;
+			filter: blur(0px);
+		}
+		.card-bg-texture {
+			z-index: 0;
+			opacity: 0;
+		}
+		.card-bg-overlay {
+			z-index: 0;
+			opacity: 0;
+			background: #000;
 		}
 
 		.card-canvas a { color: inherit; text-decoration: none; }
@@ -90,6 +118,7 @@
 			inset: 0 auto 0 0;
 			width: 20px;
 			background: var(--card-accent);
+			z-index: 2;
 			opacity: .95;
 			transition: background-color 250ms var(--ui-ease);
 		}
@@ -99,6 +128,8 @@
 			padding: 34px 40px;
 			display: grid;
 			gap: 14px;
+			position: relative;
+			z-index: 1;
 		}
 
 		/* Reserve area for pinned front logo */
@@ -458,6 +489,25 @@
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 10px;
+		}
+		.marketplace-cats {
+			display: flex;
+			gap: .45rem;
+			flex-wrap: wrap;
+			margin-bottom: .5rem;
+		}
+		.marketplace-cats .cat-btn {
+			border: 1px solid rgba(var(--bs-primary-rgb), .24);
+			background: rgba(var(--bs-primary-rgb), .08);
+			color: var(--bs-body-color);
+			border-radius: 999px;
+			padding: .25rem .62rem;
+			font-size: .78rem;
+			font-weight: 700;
+		}
+		.marketplace-cats .cat-btn.active {
+			background: rgba(var(--bs-primary-rgb), .2);
+			border-color: rgba(var(--bs-primary-rgb), .5);
 		}
 		.samples-collapsed .sample:nth-child(n+3) { display: none; }
 		.mobile-preview-toggle {
@@ -1150,6 +1200,8 @@
 						</div>
 						<div class="designer-actions d-flex flex-wrap gap-2 align-items-center">
 							<button id="btnBackToLanding" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</button>
+							<button id="btnUndo" class="btn btn-outline-secondary" type="button" aria-label="Undo" title="Undo (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise me-1"></i>Undo</button>
+							<button id="btnRedo" class="btn btn-outline-secondary" type="button" aria-label="Redo" title="Redo (Ctrl+Y)"><i class="bi bi-arrow-clockwise me-1"></i>Redo</button>
 							<div class="dropdown">
 								<button class="btn btn-primary d-inline-flex align-items-center gap-2 designer-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">
 									<i class="bi bi-list" style="font-size: 20px;"></i>
@@ -1186,8 +1238,15 @@
 										<h2 class="h6 mb-0 form-section-title">Sample Designs</h2>
 										<button id="btnViewAllDesigns" type="button" class="btn btn-sm btn-outline-secondary">View all designs</button>
 									</div>
+									<div id="marketplaceCats" class="marketplace-cats" aria-label="Template categories">
+										<button type="button" class="cat-btn active" data-cat="all">All</button>
+										<button type="button" class="cat-btn" data-cat="corporate">Corporate</button>
+										<button type="button" class="cat-btn" data-cat="minimal">Minimal</button>
+										<button type="button" class="cat-btn" data-cat="creative">Creative</button>
+										<button type="button" class="cat-btn" data-cat="personal">Personal Brand</button>
+									</div>
 									<div id="sampleDesignsWrap" class="sample-grid samples-collapsed" aria-label="Sample designs">
-									<div class="sample" data-sample="0" role="button" tabindex="0">
+									<div class="sample" data-sample="0" data-cat="corporate" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#0b1f3a;--tx:#ffffff;--c:#2f80ed;">
 											<div class="bar"></div>
 											<div class="body">
@@ -1200,7 +1259,7 @@
 											<span class="badge text-bg-primary">Load</span>
 										</div>
 									</div>
-									<div class="sample" data-sample="1" role="button" tabindex="0">
+									<div class="sample" data-sample="1" data-cat="minimal" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#ffffff;--tx:#111827;--c:#111827;">
 											<div class="bar"></div>
 											<div class="body">
@@ -1213,7 +1272,7 @@
 											<span class="badge text-bg-dark">Load</span>
 										</div>
 									</div>
-									<div class="sample" data-sample="2" role="button" tabindex="0">
+									<div class="sample" data-sample="2" data-cat="creative" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#1a103d;--tx:#ffffff;--c:#ff4d6d;">
 											<div class="bar"></div>
 											<div class="body">
@@ -1226,7 +1285,7 @@
 											<span class="badge text-bg-danger">Load</span>
 										</div>
 									</div>
-									<div class="sample" data-sample="3" role="button" tabindex="0">
+									<div class="sample" data-sample="3" data-cat="corporate" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#0b0f19;--tx:#f8fafc;--c:#a78bfa;">
 											<div class="bar"></div>
 											<div class="body">
@@ -1239,7 +1298,7 @@
 											<span class="badge text-bg-secondary">Load</span>
 										</div>
 									</div>
-									<div class="sample" data-sample="4" role="button" tabindex="0">
+									<div class="sample" data-sample="4" data-cat="personal" role="button" tabindex="0">
 										<div class="thumb" style="--bg:#0b1f3a;--tx:#ffffff;--c:#2f80ed;">
 											<div class="bar"></div>
 											<div class="body">
@@ -1250,6 +1309,19 @@
 										<div class="meta">
 											<div class="name">No Photo</div>
 											<span class="badge text-bg-primary">Load</span>
+										</div>
+									</div>
+									<div class="sample" data-sample="5" data-cat="personal" role="button" tabindex="0">
+										<div class="thumb" style="--bg:#ffffff;--tx:#111827;--c:#0ea5e9;">
+											<div class="bar"></div>
+											<div class="body">
+												<div class="t1">Ava Personal</div>
+												<div class="t2">Personal Brand • Centered</div>
+											</div>
+										</div>
+										<div class="meta">
+											<div class="name">Personal Brand</div>
+											<span class="badge text-bg-info">Load</span>
 										</div>
 									</div>
 								</div>
@@ -1423,6 +1495,9 @@
 									<div id="flipInner" class="flip-inner">
 										<div class="card-face front">
 											<div id="cardFront" class="card-canvas layout-classic-left t-corporate">
+												<div id="bgImageLayerFront" class="card-bg-image" aria-hidden="true"></div>
+												<div id="bgTextureLayerFront" class="card-bg-texture" aria-hidden="true"></div>
+												<div id="bgOverlayFront" class="card-bg-overlay" aria-hidden="true"></div>
 												<div class="card-accent-bar" aria-hidden="true"></div>
 												<div class="card-inner">
 
@@ -1471,6 +1546,9 @@
 
 									<div class="card-face back">
 										<div id="cardBack" class="card-canvas t-corporate">
+												<div id="bgImageLayerBack" class="card-bg-image" aria-hidden="true"></div>
+												<div id="bgTextureLayerBack" class="card-bg-texture" aria-hidden="true"></div>
+												<div id="bgOverlayBack" class="card-bg-overlay" aria-hidden="true"></div>
 											<div class="back-mark" aria-hidden="true"></div>
 											<div class="card-back-inner">
 												<div class="back-brand">
@@ -1522,6 +1600,39 @@
 						</div>
 						<div class="row g-3">
 							<div class="col-12">
+								<h3 class="h6 mb-1">Background Studio</h3>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Background Image</label>
+								<input id="bgImageUpload" type="file" accept="image/*" class="form-control" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Texture</label>
+								<select id="textureType" class="form-select">
+									<option value="none">None</option>
+									<option value="dots">Soft dots</option>
+									<option value="grid">Grid</option>
+									<option value="stripes">Diagonal stripes</option>
+								</select>
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Image Opacity</label>
+								<input id="bgImageOpacity" type="range" min="0" max="100" value="0" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Image Blur</label>
+								<input id="bgImageBlur" type="range" min="0" max="12" value="0" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Overlay Strength</label>
+								<input id="bgOverlayOpacity" type="range" min="0" max="80" value="0" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Texture Strength</label>
+								<input id="textureOpacity" type="range" min="0" max="60" value="0" class="form-range" />
+							</div>
+
+							<div class="col-12">
 								<h3 class="h6 mb-1">Colors</h3>
 							</div>
 							<div class="col-sm-4">
@@ -1553,6 +1664,26 @@
 							<div class="col-sm-6">
 								<label class="form-label">Text Size</label>
 								<input id="fontSize" type="range" min="12" max="18" value="14" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Letter Spacing</label>
+								<input id="letterSpacing" type="range" min="-1" max="3" step="0.1" value="0" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Line Height</label>
+								<input id="lineHeight" type="range" min="1" max="1.8" step="0.05" value="1.3" class="form-range" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Base Weight</label>
+								<input id="baseFontWeight" type="range" min="300" max="700" step="100" value="400" class="form-range" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Name Size</label>
+								<input id="nameSize" type="range" min="28" max="58" value="35" class="form-range" />
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Title Size</label>
+								<input id="titleSize" type="range" min="14" max="30" value="18" class="form-range" />
 							</div>
 							<div class="col-12">
 								<div class="d-flex flex-wrap gap-3">
@@ -1621,6 +1752,8 @@
 			designerView: $('designerView'),
 			btnStart: $('btnStart'),
 			btnBackToLanding: $('btnBackToLanding'),
+			btnUndo: $('btnUndo'),
+			btnRedo: $('btnRedo'),
 			btnThemeToggle: $('btnThemeToggle'),
 			themeToggleIcon: $('themeToggleIcon'),
 			themeToggleText: $('themeToggleText'),
@@ -1634,6 +1767,7 @@
 			actionSaveCustom: $('actionSaveCustom'),
 			actionShare: $('actionShare'),
 			btnViewAllDesigns: $('btnViewAllDesigns'),
+			marketplaceCats: $('marketplaceCats'),
 			customDesignsWrap: $('customDesignsWrap'),
 			customGrid: $('customGrid'),
 			sampleDesignsWrap: $('sampleDesignsWrap'),
@@ -1659,10 +1793,21 @@
 			bgColor: $('bgColor'),
 			textColor: $('textColor'),
 			accentColor: $('accentColor'),
+			bgImageUpload: $('bgImageUpload'),
+			bgImageOpacity: $('bgImageOpacity'),
+			bgImageBlur: $('bgImageBlur'),
+			bgOverlayOpacity: $('bgOverlayOpacity'),
+			textureType: $('textureType'),
+			textureOpacity: $('textureOpacity'),
 			logoUpload: $('logoUpload'),
 			avatarUpload: $('avatarUpload'),
 			fontFamily: $('fontFamily'),
 			fontSize: $('fontSize'),
+			letterSpacing: $('letterSpacing'),
+			lineHeight: $('lineHeight'),
+			baseFontWeight: $('baseFontWeight'),
+			nameSize: $('nameSize'),
+			titleSize: $('titleSize'),
 			nameBold: $('nameBold'),
 			titleItalic: $('titleItalic'),
 			companyBold: $('companyBold'),
@@ -1680,7 +1825,13 @@
 			qrWrap: $('qrWrap'),
 			qrBack: $('qrBack'),
 			qrWrapBack: $('qrWrapBack'),
-			qrHelp: $('qrHelp')
+			qrHelp: $('qrHelp'),
+			bgImageLayerFront: $('bgImageLayerFront'),
+			bgImageLayerBack: $('bgImageLayerBack'),
+			bgTextureLayerFront: $('bgTextureLayerFront'),
+			bgTextureLayerBack: $('bgTextureLayerBack'),
+			bgOverlayFront: $('bgOverlayFront'),
+			bgOverlayBack: $('bgOverlayBack')
 		};
 
 		function hasSharedHash() {
@@ -1915,13 +2066,65 @@
 			return 'https://' + v;
 		}
 
-		function setCssVars({ bg, text, accent, fontFamily, fontSizePx }) {
+		function setCssVars({ bg, text, accent, fontFamily, fontSizePx, letterSpacingPx, lineHeightVal }) {
 			const root = document.documentElement;
 			if (bg) root.style.setProperty('--card-bg', bg);
 			if (text) root.style.setProperty('--card-text', text);
 			if (accent) root.style.setProperty('--card-accent', accent);
 			if (fontFamily) root.style.setProperty('--card-font', fontFamily);
 			if (fontSizePx) root.style.setProperty('--card-font-size', fontSizePx);
+			if (letterSpacingPx !== undefined) root.style.setProperty('--card-letter-spacing', letterSpacingPx);
+			if (lineHeightVal !== undefined) root.style.setProperty('--card-line-height', lineHeightVal);
+		}
+
+		let bgImageDataUrl = '';
+		function readImageData(file) {
+			return new Promise((resolve) => {
+				if (!file) return resolve('');
+				const reader = new FileReader();
+				reader.onload = () => resolve(String(reader.result || ''));
+				reader.onerror = () => resolve('');
+				reader.readAsDataURL(file);
+			});
+		}
+		function textureBackgroundFor(type) {
+			switch (type) {
+				case 'dots':
+					return 'radial-gradient(circle at 1px 1px, rgba(255,255,255,.18) 1px, transparent 1.4px)';
+				case 'grid':
+					return 'linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px)';
+				case 'stripes':
+					return 'repeating-linear-gradient(135deg, rgba(255,255,255,.14) 0 2px, transparent 2px 9px)';
+				default:
+					return '';
+			}
+		}
+		function applyBackgroundLayers() {
+			const imageOpacity = (Number(els.bgImageOpacity?.value) || 0) / 100;
+			const imageBlur = Number(els.bgImageBlur?.value) || 0;
+			const overlayOpacity = (Number(els.bgOverlayOpacity?.value) || 0) / 100;
+			const textureOpacity = (Number(els.textureOpacity?.value) || 0) / 100;
+			const textureType = els.textureType?.value || 'none';
+			const textureBg = textureBackgroundFor(textureType);
+
+			[els.bgImageLayerFront, els.bgImageLayerBack].forEach((el) => {
+				if (!el) return;
+				el.style.backgroundImage = bgImageDataUrl ? `url("${bgImageDataUrl}")` : 'none';
+				el.style.opacity = bgImageDataUrl ? String(imageOpacity) : '0';
+				el.style.filter = `blur(${imageBlur}px)`;
+			});
+
+			[els.bgTextureLayerFront, els.bgTextureLayerBack].forEach((el) => {
+				if (!el) return;
+				el.style.backgroundImage = textureBg || 'none';
+				el.style.backgroundSize = textureType === 'grid' ? '22px 22px' : textureType === 'dots' ? '14px 14px' : 'auto';
+				el.style.opacity = textureType === 'none' ? '0' : String(textureOpacity);
+			});
+
+			[els.bgOverlayFront, els.bgOverlayBack].forEach((el) => {
+				if (!el) return;
+				el.style.opacity = String(overlayOpacity);
+			});
 		}
 
 		function fontCssFromSelect(value) {
@@ -1949,6 +2152,18 @@
 			if (els.accentColor) els.accentColor.value = t.accent;
 			if (els.fontFamily) els.fontFamily.value = t.font;
 			if (els.layout) els.layout.value = t.layout;
+			if (els.fontSize) els.fontSize.value = '14';
+			if (els.letterSpacing) els.letterSpacing.value = '0';
+			if (els.lineHeight) els.lineHeight.value = '1.3';
+			if (els.baseFontWeight) els.baseFontWeight.value = '400';
+			if (els.nameSize) els.nameSize.value = '35';
+			if (els.titleSize) els.titleSize.value = '18';
+			if (els.bgImageOpacity) els.bgImageOpacity.value = '0';
+			if (els.bgImageBlur) els.bgImageBlur.value = '0';
+			if (els.bgOverlayOpacity) els.bgOverlayOpacity.value = '0';
+			if (els.textureType) els.textureType.value = 'none';
+			if (els.textureOpacity) els.textureOpacity.value = '0';
+			bgImageDataUrl = '';
 
 			setCssVars({
 				bg: t.bg,
@@ -1962,6 +2177,7 @@
 			els.cardBack?.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
 			els.cardFront?.classList.add(t.className);
 			els.cardBack?.classList.add(t.className);
+			applyBackgroundLayers();
 		}
 
 		function hideIfEmpty(containerEl, value) {
@@ -2155,8 +2371,16 @@
 				text: els.textColor?.value || '#ffffff',
 				accent: els.accentColor?.value || '#2f80ed',
 				fontFamily: fontCssFromSelect(els.fontFamily?.value),
-				fontSizePx: (Number(els.fontSize?.value) || 14) + 'px'
+				fontSizePx: (Number(els.fontSize?.value) || 14) + 'px',
+				letterSpacingPx: (Number(els.letterSpacing?.value) || 0) + 'px',
+				lineHeightVal: String(Number(els.lineHeight?.value) || 1.3)
 			});
+			const baseWeight = Number(els.baseFontWeight?.value) || 400;
+			if (els.cardFront) els.cardFront.style.fontWeight = String(baseWeight);
+			if (els.cardBack) els.cardBack.style.fontWeight = String(baseWeight);
+			if (preview.pName) preview.pName.style.fontSize = (Number(els.nameSize?.value) || 35) + 'px';
+			if (preview.pTitleText) preview.pTitleText.style.fontSize = (Number(els.titleSize?.value) || 18) + 'px';
+			applyBackgroundLayers();
 
 			applyLayout(els.layout?.value);
 			updateFooterStyleDNA();
@@ -2241,6 +2465,110 @@
 			els.cardFront.classList.toggle('no-avatar', !!hidden);
 		}
 
+		const HISTORY_LIMIT = 60;
+		let historyPast = [];
+		let historyFuture = [];
+		let historyTimer = null;
+		let isRestoringHistory = false;
+		let lastHistoryFingerprint = '';
+
+		function historyFingerprint(state) {
+			try { return JSON.stringify(state); } catch { return ''; }
+		}
+		function updateHistoryControls() {
+			if (els.btnUndo) els.btnUndo.disabled = historyPast.length <= 1;
+			if (els.btnRedo) els.btnRedo.disabled = historyFuture.length === 0;
+		}
+		function pushHistorySnapshot({ clearRedo = true, immediate = false } = {}) {
+			if (isRestoringHistory) return;
+			const commit = () => {
+				const snapshot = currentState();
+				const fp = historyFingerprint(snapshot);
+				if (!fp || fp === lastHistoryFingerprint) {
+					updateHistoryControls();
+					return;
+				}
+				historyPast.push(snapshot);
+				if (historyPast.length > HISTORY_LIMIT) historyPast.shift();
+				lastHistoryFingerprint = fp;
+				if (clearRedo) historyFuture = [];
+				updateHistoryControls();
+			};
+			if (immediate) {
+				if (historyTimer) {
+					clearTimeout(historyTimer);
+					historyTimer = null;
+				}
+				commit();
+				return;
+			}
+			if (historyTimer) clearTimeout(historyTimer);
+			historyTimer = setTimeout(() => {
+				historyTimer = null;
+				commit();
+			}, 180);
+		}
+		function flushPendingHistorySnapshot() {
+			if (!historyTimer) return;
+			clearTimeout(historyTimer);
+			historyTimer = null;
+			pushHistorySnapshot({ immediate: true });
+		}
+		function applyHistorySnapshot(snapshot) {
+			if (!snapshot) return;
+			isRestoringHistory = true;
+			applyState(snapshot);
+			isRestoringHistory = false;
+			lastHistoryFingerprint = historyFingerprint(currentState());
+			updateHistoryControls();
+		}
+		function undoHistory() {
+			flushPendingHistorySnapshot();
+			if (historyPast.length <= 1) return;
+			const current = historyPast.pop();
+			if (current) historyFuture.push(current);
+			const previous = historyPast[historyPast.length - 1];
+			applyHistorySnapshot(previous);
+		}
+		function redoHistory() {
+			flushPendingHistorySnapshot();
+			if (historyFuture.length === 0) return;
+			const next = historyFuture.pop();
+			if (!next) return;
+			historyPast.push(next);
+			applyHistorySnapshot(next);
+		}
+		function initHistory() {
+			historyPast = [];
+			historyFuture = [];
+			lastHistoryFingerprint = '';
+			pushHistorySnapshot({ immediate: true, clearRedo: true });
+			updateHistoryControls();
+		}
+		function isEditableTarget(target) {
+			if (!target) return false;
+			return !!target.closest?.('input, textarea, select, [contenteditable="true"]');
+		}
+		function handleHistoryShortcuts(e) {
+			if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+			if (isEditableTarget(e.target)) return;
+			const key = (e.key || '').toLowerCase();
+			if (key === 'z' && e.shiftKey) {
+				e.preventDefault();
+				redoHistory();
+				return;
+			}
+			if (key === 'z') {
+				e.preventDefault();
+				undoHistory();
+				return;
+			}
+			if (key === 'y') {
+				e.preventDefault();
+				redoHistory();
+			}
+		}
+
 		const CUSTOM_KEY = 'visitingCard.customDesigns.v1';
 		function getCustomDesigns() {
 			try {
@@ -2305,6 +2633,7 @@
 			applyState(item.state);
 			showFront();
 			requestScale();
+			pushHistorySnapshot({ immediate: true });
 		}
 
 		function deleteCustomDesign(id) {
@@ -2333,6 +2662,16 @@
 				accentColor: els.accentColor.value,
 				fontFamily: els.fontFamily.value,
 				fontSize: els.fontSize.value,
+				letterSpacing: els.letterSpacing?.value,
+				lineHeight: els.lineHeight?.value,
+				baseFontWeight: els.baseFontWeight?.value,
+				nameSize: els.nameSize?.value,
+				titleSize: els.titleSize?.value,
+				bgImageOpacity: els.bgImageOpacity?.value,
+				bgImageBlur: els.bgImageBlur?.value,
+				bgOverlayOpacity: els.bgOverlayOpacity?.value,
+				textureType: els.textureType?.value,
+				textureOpacity: els.textureOpacity?.value,
 				nameBold: els.nameBold.checked,
 				titleItalic: els.titleItalic.checked,
 				companyBold: els.companyBold.checked,
@@ -2366,6 +2705,16 @@
 			setVal(els.accentColor, s.accentColor);
 			if (s.fontFamily) els.fontFamily.value = s.fontFamily;
 			if (s.fontSize) els.fontSize.value = String(s.fontSize);
+			setVal(els.letterSpacing, s.letterSpacing);
+			setVal(els.lineHeight, s.lineHeight);
+			setVal(els.baseFontWeight, s.baseFontWeight);
+			setVal(els.nameSize, s.nameSize);
+			setVal(els.titleSize, s.titleSize);
+			setVal(els.bgImageOpacity, s.bgImageOpacity);
+			setVal(els.bgImageBlur, s.bgImageBlur);
+			setVal(els.bgOverlayOpacity, s.bgOverlayOpacity);
+			setVal(els.textureType, s.textureType);
+			setVal(els.textureOpacity, s.textureOpacity);
 			if (typeof s.nameBold === 'boolean') els.nameBold.checked = s.nameBold;
 			if (typeof s.titleItalic === 'boolean') els.titleItalic.checked = s.titleItalic;
 			if (typeof s.companyBold === 'boolean') els.companyBold.checked = s.companyBold;
@@ -2519,17 +2868,28 @@
 				els.linkedin, els.twitter, els.instagram,
 				els.bgColor, els.textColor, els.accentColor,
 				els.fontFamily, els.fontSize,
+				els.letterSpacing, els.lineHeight, els.baseFontWeight, els.nameSize, els.titleSize,
+				els.bgImageOpacity, els.bgImageBlur, els.bgOverlayOpacity, els.textureType, els.textureOpacity,
 				els.nameBold, els.titleItalic, els.companyBold,
 				els.layout, els.qrType, els.qrEnabled
 			];
+			const onLiveInput = () => {
+				updatePreview();
+				pushHistorySnapshot();
+			};
+			const onLiveChange = () => {
+				updatePreview();
+				pushHistorySnapshot({ immediate: true });
+			};
 			liveInputs.filter(Boolean).forEach((el) => {
-				el.addEventListener('input', updatePreview);
-				el.addEventListener('change', updatePreview);
+				el.addEventListener('input', onLiveInput);
+				el.addEventListener('change', onLiveChange);
 			});
 
 			els.template?.addEventListener('change', () => {
 				applyTemplate(els.template?.value);
 				updatePreview();
+				pushHistorySnapshot({ immediate: true });
 			});
 
 			// Auto-enable & update QR when user enters links
@@ -2554,6 +2914,11 @@
 				readImage(els.logoUpload?.files?.[0], preview.logoImg, preview.logoFallback);
 				readImage(els.logoUpload?.files?.[0], preview.logoImgBack, preview.logoFallbackBack);
 			});
+			els.bgImageUpload?.addEventListener('change', async () => {
+				bgImageDataUrl = await readImageData(els.bgImageUpload?.files?.[0]);
+				updatePreview();
+				pushHistorySnapshot({ immediate: true });
+			});
 			els.btnFront?.addEventListener('click', showFront);
 			els.btnBack?.addEventListener('click', showBack);
 			els.btnFlip?.addEventListener('click', toggleFlip);
@@ -2567,6 +2932,8 @@
 			els.actionSaveCustom?.addEventListener('click', saveCustomDesign);
 			els.actionShare?.addEventListener('click', copyShareLink);
 			els.btnThemeToggle?.addEventListener('click', toggleTheme);
+			els.btnUndo?.addEventListener('click', undoHistory);
+			els.btnRedo?.addEventListener('click', redoHistory);
 			els.btnSurprise?.addEventListener('click', () => {
 				if (!Array.isArray(samples) || samples.length === 0) return;
 				const idx = Math.floor(Math.random() * samples.length);
@@ -2578,6 +2945,25 @@
 				if (!wrap) return;
 				const collapsed = wrap.classList.toggle('samples-collapsed');
 				els.btnViewAllDesigns.textContent = collapsed ? 'View all designs' : 'Hide designs';
+			});
+			els.marketplaceCats?.addEventListener('click', (e) => {
+				const btn = e.target.closest?.('.cat-btn');
+				if (!btn) return;
+				const cat = btn.getAttribute('data-cat') || 'all';
+				els.marketplaceCats.querySelectorAll('.cat-btn').forEach((b) => b.classList.remove('active'));
+				btn.classList.add('active');
+				const wrap = els.sampleDesignsWrap;
+				if (!wrap) return;
+				const cards = Array.from(wrap.querySelectorAll('.sample[data-sample]'));
+				cards.forEach((card) => {
+					const cardCat = card.getAttribute('data-cat') || 'all';
+					const show = cat === 'all' || cardCat === cat;
+					card.style.display = show ? '' : 'none';
+				});
+				if (cat !== 'all') {
+					wrap.classList.remove('samples-collapsed');
+					if (els.btnViewAllDesigns) els.btnViewAllDesigns.textContent = 'Hide designs';
+				}
 			});
 
 			// Mobile preview: rescale when the collapse opens.
@@ -2658,6 +3044,7 @@
 				mountPreviewForViewport();
 				requestScale();
 			});
+			document.addEventListener('keydown', handleHistoryShortcuts);
 		}
 
 		const samples = [
@@ -2771,6 +3158,29 @@
 				qrType: 'website',
 				qrEnabled: true,
 				hideAvatar: true
+			},
+			{
+				template: 'minimal',
+				layout: 'centered',
+				fullName: 'Ariana Noor',
+				jobTitle: 'Personal Brand Strategist',
+				company: 'Ariana Studio',
+				phone: '+1 (646) 555-0127',
+				email: 'hello@ariananoor.com',
+				website: 'ariananoor.com',
+				address: 'Dubai, UAE',
+				instagram: 'instagram.com/ariananoor',
+				bgColor: '#ffffff',
+				textColor: '#111827',
+				accentColor: '#0ea5e9',
+				fontFamily: 'Montserrat',
+				fontSize: '14',
+				nameBold: true,
+				titleItalic: false,
+				companyBold: true,
+				qrType: 'portfolio',
+				qrEnabled: true,
+				hideAvatar: false
 			}
 		];
 
@@ -2782,6 +3192,7 @@
 			setSelectedSample(idx);
 			showDesigner();
 			requestScale();
+			pushHistorySnapshot({ immediate: true });
 		}
 
 		function setSelectedSample(idx) {
@@ -2803,6 +3214,7 @@
 		applyTemplate('corporate');
 		tryLoadStateFromHash();
 		updatePreview();
+		initHistory();
 		requestScale();
 		renderCustomDesigns();
 		if (hasSharedHash()) showDesigner();

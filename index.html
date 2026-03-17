@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -483,6 +483,10 @@
 			transition: transform 180ms var(--ui-ease), box-shadow 180ms var(--ui-ease);
 		}
 		.sample:hover { transform: translateY(-2px); box-shadow: var(--bs-box-shadow-sm); }
+		.sample.is-selected {
+			border-color: rgba(var(--bs-primary-rgb), .55);
+			box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), .14);
+		}
 		.sample .thumb {
 			width: 100%;
 			height: 86px;
@@ -541,6 +545,27 @@
 		}
 		.hero-title { letter-spacing: -.4px; }
 		.hero-sub { max-width: 56ch; }
+
+		[data-bs-theme="dark"] .hero {
+			background:
+				radial-gradient(1200px 500px at 10% 10%, rgba(var(--bs-primary-rgb), .18), rgba(var(--bs-primary-rgb), 0)),
+				radial-gradient(900px 460px at 90% 70%, rgba(var(--bs-info-rgb), .14), rgba(var(--bs-info-rgb), 0)),
+				linear-gradient(135deg, rgba(10,16,30,.92), rgba(24,36,56,.84));
+			border-color: rgba(148,163,184,.25);
+		}
+		[data-bs-theme="dark"] .hero-title {
+			color: #f8fafc;
+			text-shadow: 0 2px 12px rgba(0,0,0,.35);
+		}
+		[data-bs-theme="dark"] .hero .text-body-secondary,
+		[data-bs-theme="dark"] .hero-sub {
+			color: rgba(226,232,240,.88) !important;
+		}
+		[data-bs-theme="dark"] .hero-kicker {
+			background: rgba(var(--bs-primary-rgb), .18);
+			border-color: rgba(147,197,253,.42);
+			color: #93c5fd;
+		}
 		.float-stage {
 			position: relative;
 			min-height: 360px;
@@ -591,6 +616,13 @@
 		@media (prefers-reduced-motion: reduce) {
 			.hero::after, .mini-card { animation: none !important; }
 			.flip-inner, .card-canvas, .card-accent-bar, .detail i { transition: none !important; }
+			#designerView.animate-in * { animation: none !important; }
+			.sample, .designer-form-card .form-control, .designer-form-card .form-select { transition: none !important; }
+			.designer-topbar::after,
+			.designer-actions .btn::before,
+			.designer-actions .designer-menu .dropdown-item::before { animation: none !important; }
+			.footer-marquee-track,
+			.site-footer::before { animation: none !important; }
 		}
 
 		/* Designer top bar */
@@ -600,14 +632,17 @@
 			z-index: 1030;
 			border-radius: 16px;
 			background:
+				radial-gradient(900px 220px at 16% 0%, rgba(var(--bs-primary-rgb), .16), rgba(var(--bs-primary-rgb), 0)),
+				radial-gradient(800px 220px at 90% 100%, rgba(var(--bs-info-rgb), .10), rgba(var(--bs-info-rgb), 0)),
 				linear-gradient(180deg,
 					rgba(var(--bs-body-bg-rgb), .92),
 					rgba(var(--bs-body-bg-rgb), .78)
 				);
-			border: 1px solid rgba(0,0,0,.06);
-			box-shadow: var(--bs-box-shadow-sm);
+			border: 1px solid rgba(var(--bs-primary-rgb), .16);
+			box-shadow: 0 10px 28px rgba(14, 30, 58, .10), 0 2px 8px rgba(0,0,0,.05);
 			backdrop-filter: blur(10px);
 			-webkit-backdrop-filter: blur(10px);
+			overflow: hidden;
 		}
 		.designer-topbar::before {
 			content: '';
@@ -617,8 +652,445 @@
 			border-radius: 16px 0 0 16px;
 			background: rgba(var(--bs-primary-rgb), .85);
 		}
+		.designer-topbar::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(108deg, transparent 42%, rgba(255,255,255,.32) 50%, transparent 58%);
+			transform: translateX(-120%);
+			animation: topbarSweep 6.5s var(--ui-ease) infinite;
+			pointer-events: none;
+		}
+		@keyframes topbarSweep {
+			0%, 70% { transform: translateX(-120%); }
+			100% { transform: translateX(120%); }
+		}
 		.designer-topbar-inner { position: relative; }
 		.designer-actions .btn { white-space: nowrap; }
+		.theme-toggle .bi {
+			transition: transform 220ms var(--ui-ease);
+		}
+		.theme-toggle:hover .bi {
+			transform: rotate(-12deg) scale(1.06);
+		}
+		[data-bs-theme="dark"] .theme-toggle {
+			border-color: rgba(255,255,255,.24);
+			background: rgba(255,255,255,.06);
+			color: #f8fafc;
+		}
+
+		.designer-actions .btn,
+		.designer-actions .designer-menu .dropdown-item {
+			position: relative;
+			overflow: hidden;
+			isolation: isolate;
+		}
+		.designer-actions .btn::before,
+		.designer-actions .designer-menu .dropdown-item::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(120deg, transparent 35%, rgba(255,255,255,.46) 50%, transparent 65%);
+			transform: translateX(-140%);
+			transition: transform 520ms var(--ui-ease);
+			pointer-events: none;
+		}
+		.designer-actions .btn:hover::before,
+		.designer-actions .designer-menu .dropdown-item:hover::before,
+		.designer-actions .designer-menu .dropdown-item:focus::before {
+			transform: translateX(140%);
+		}
+
+		.designer-actions .btn {
+			transition: transform 220ms var(--ui-ease), box-shadow 220ms var(--ui-ease), border-color 220ms var(--ui-ease);
+		}
+		.designer-actions .btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 18px rgba(var(--bs-primary-rgb), .16);
+		}
+
+		@keyframes topbarEnter {
+			from { opacity: 0; transform: translateY(-8px) scale(.995); }
+			to { opacity: 1; transform: translateY(0) scale(1); }
+		}
+		@keyframes chipEnter {
+			from { opacity: 0; transform: translateY(8px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+		#designerView.animate-in .designer-topbar { animation: topbarEnter 520ms var(--ui-ease) both; }
+		#designerView.animate-in .designer-actions > .btn,
+		#designerView.animate-in .designer-actions .designer-menu .dropdown-item {
+			animation: chipEnter 500ms var(--ui-ease) both;
+		}
+		#designerView.animate-in .designer-actions > .btn { animation-delay: 90ms; }
+		#designerView.animate-in .designer-actions .designer-menu li:nth-child(1) .dropdown-item { animation-delay: 130ms; }
+		#designerView.animate-in .designer-actions .designer-menu li:nth-child(2) .dropdown-item { animation-delay: 170ms; }
+		#designerView.animate-in .designer-actions .designer-menu li:nth-child(4) .dropdown-item { animation-delay: 210ms; }
+		#designerView.animate-in .designer-actions .designer-menu li:nth-child(5) .dropdown-item { animation-delay: 250ms; }
+
+		/* Form polish */
+		.designer-form-card .designer-form-header {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 12px;
+			padding-bottom: 12px;
+			margin-bottom: 12px;
+			border-bottom: 1px solid rgba(0,0,0,.06);
+		}
+		.designer-form-card .designer-form-header .title {
+			font-weight: 800;
+			letter-spacing: -.2px;
+		}
+		.designer-form-card .designer-form-header .subtitle {
+			color: var(--bs-secondary-color);
+			font-size: .875rem;
+		}
+		.designer-form-card .form-label {
+			font-weight: 650;
+			color: var(--bs-body-color);
+			margin-bottom: .35rem;
+		}
+		.designer-form-card .form-control,
+		.designer-form-card .form-select,
+		#stylePanel .form-control,
+		#stylePanel .form-select {
+			border-color: rgba(0,0,0,.16);
+			background-color: rgba(255,255,255,.88);
+			color: var(--bs-body-color);
+		}
+		.designer-form-card .form-control:focus,
+		.designer-form-card .form-select:focus,
+		#stylePanel .form-control:focus,
+		#stylePanel .form-select:focus {
+			border-color: rgba(var(--bs-primary-rgb), .45);
+			box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .14);
+		}
+		.designer-form-card .form-control::placeholder,
+		#stylePanel .form-control::placeholder {
+			color: rgba(0,0,0,.40);
+		}
+
+		[data-bs-theme="dark"] .designer-form-card .form-label,
+		[data-bs-theme="dark"] #stylePanel .form-label,
+		[data-bs-theme="dark"] .designer-form-card .form-check-label,
+		[data-bs-theme="dark"] #stylePanel .form-check-label {
+			color: #e5e7eb;
+		}
+		[data-bs-theme="dark"] .designer-form-card .form-control,
+		[data-bs-theme="dark"] .designer-form-card .form-select,
+		[data-bs-theme="dark"] #stylePanel .form-control,
+		[data-bs-theme="dark"] #stylePanel .form-select {
+			background-color: rgba(15, 23, 42, .84);
+			border-color: rgba(148, 163, 184, .52);
+			color: #f8fafc;
+		}
+		[data-bs-theme="dark"] .designer-form-card .form-control::placeholder,
+		[data-bs-theme="dark"] #stylePanel .form-control::placeholder {
+			color: rgba(226, 232, 240, .62);
+		}
+		[data-bs-theme="dark"] .designer-form-card .form-control:focus,
+		[data-bs-theme="dark"] .designer-form-card .form-select:focus,
+		[data-bs-theme="dark"] #stylePanel .form-control:focus,
+		[data-bs-theme="dark"] #stylePanel .form-select:focus {
+			border-color: rgba(96, 165, 250, .72);
+			box-shadow: 0 0 0 .2rem rgba(96, 165, 250, .26);
+		}
+		[data-bs-theme="dark"] .designer-form-card .form-check-input,
+		[data-bs-theme="dark"] #stylePanel .form-check-input {
+			border-color: rgba(148, 163, 184, .56);
+			background-color: rgba(15, 23, 42, .84);
+		}
+		[data-bs-theme="dark"] .designer-form-card .form-check-input:checked,
+		[data-bs-theme="dark"] #stylePanel .form-check-input:checked {
+			background-color: rgba(var(--bs-primary-rgb), .9);
+			border-color: rgba(var(--bs-primary-rgb), .95);
+		}
+
+		/* Crystal surface */
+		.crystal-surface {
+			background:
+				radial-gradient(900px 380px at 10% 0%, rgba(var(--bs-primary-rgb), .08), rgba(var(--bs-primary-rgb), 0)),
+				radial-gradient(820px 360px at 90% 100%, rgba(var(--bs-success-rgb), .07), rgba(var(--bs-success-rgb), 0)),
+				linear-gradient(180deg, rgba(var(--bs-body-bg-rgb), .90), rgba(var(--bs-body-bg-rgb), .74));
+			border: 1px solid rgba(0,0,0,.08);
+			box-shadow: var(--bs-box-shadow-sm);
+			backdrop-filter: blur(12px) saturate(1.2);
+			-webkit-backdrop-filter: blur(12px) saturate(1.2);
+		}
+		.designer-form-card,
+		#previewPanel .card,
+		#stylePanel .card {
+			border-radius: 16px;
+		}
+		.designer-form-card { overflow: hidden; }
+		.designer-form-card { background: transparent; border: 0; box-shadow: none; }
+		.designer-form-card > .card-body {
+			border-radius: 16px;
+		}
+
+		/* Subtle lift on hover for clarity */
+		.designer-form-card > .card-body,
+		#previewPanel .card,
+		#stylePanel .card {
+			transition: transform 220ms var(--ui-ease), box-shadow 220ms var(--ui-ease), border-color 220ms var(--ui-ease);
+		}
+		@media (min-width: 992px) {
+			.designer-form-card > .card-body:hover,
+			#previewPanel .card:hover,
+			#stylePanel .card:hover {
+				transform: translateY(-2px);
+				box-shadow: var(--bs-box-shadow);
+			}
+		}
+
+		/* Entrance animation */
+		@keyframes riseIn {
+			from { opacity: 0; transform: translateY(10px) scale(.99); }
+			to { opacity: 1; transform: translateY(0) scale(1); }
+		}
+		#designerView.animate-in .designer-form-card > .card-body { animation: riseIn 520ms var(--ui-ease) both; }
+		#designerView.animate-in #previewPanel .card { animation: riseIn 560ms var(--ui-ease) both; animation-delay: 60ms; }
+		#designerView.animate-in #stylePanel .card { animation: riseIn 600ms var(--ui-ease) both; animation-delay: 110ms; }
+
+		/* Selected sample micro-animation */
+		@keyframes selectedPop {
+			0% { transform: scale(1); }
+			40% { transform: scale(1.02); }
+			100% { transform: scale(1); }
+		}
+		.sample.is-selected { animation: selectedPop 420ms var(--ui-ease); }
+
+		.form-section-title {
+			display: flex;
+			align-items: center;
+			gap: .5rem;
+			font-weight: 800;
+			letter-spacing: .2px;
+		}
+		.form-section-title::before {
+			content: '';
+			width: 10px;
+			height: 10px;
+			border-radius: 999px;
+			background: rgba(var(--bs-primary-rgb), .85);
+			flex: 0 0 auto;
+		}
+		.form-section-title.with-divider {
+			padding-top: 12px;
+			border-top: 1px solid rgba(0,0,0,.06);
+		}
+
+		/* Make color pickers align with other inputs */
+		.designer-form-card .form-control-color {
+			width: 100%;
+			height: calc(2.375rem + 2px);
+			padding: .375rem .5rem;
+		}
+
+		/* Style panel (under preview on desktop) */
+		#stylePanel .card-body { padding: 1rem; }
+		#stylePanel h3.h6 { font-weight: 800; }
+
+		/* Designer menu: dropdown on mobile, inline on desktop */
+		.designer-actions .designer-menu .dropdown-item {
+			display: flex;
+			align-items: center;
+		}
+
+		@media (min-width: 768px) {
+			.designer-actions .designer-menu-toggle { display: none !important; }
+
+			.designer-actions .designer-menu {
+				position: static !important;
+				display: flex !important;
+				flex-direction: row;
+				align-items: center;
+				gap: .5rem;
+				padding: 0;
+				margin: 0;
+				min-width: 0;
+				list-style: none;
+				border: 0;
+				background: transparent;
+				box-shadow: none;
+				transform: none !important;
+			}
+
+			.designer-actions .designer-menu .dropdown-item {
+				width: auto;
+				padding: .45rem .8rem;
+				border-radius: 999px;
+				background: rgba(var(--bs-primary-rgb), .08);
+				border: 1px solid rgba(var(--bs-primary-rgb), .18);
+				font-weight: 600;
+				color: var(--bs-body-color);
+				transition: background-color 180ms var(--ui-ease), border-color 180ms var(--ui-ease), color 180ms var(--ui-ease);
+			}
+			.designer-actions .designer-menu .dropdown-item:hover,
+			.designer-actions .designer-menu .dropdown-item:focus {
+				background: rgba(var(--bs-primary-rgb), .12);
+				border-color: rgba(var(--bs-primary-rgb), .24);
+				color: var(--bs-primary);
+			}
+			.designer-actions .designer-menu .dropdown-item:active {
+				background: rgba(var(--bs-primary-rgb), .16);
+			}
+
+			.designer-actions .designer-menu .dropdown-divider { display: none; }
+		}
+
+		/* Footer (unique interactive strip) */
+		.site-footer-wrap { padding: 0 1rem 1.25rem; }
+		.site-footer {
+			position: relative;
+			overflow: hidden;
+			max-width: 1320px;
+			margin: 0 auto;
+			border-radius: 18px;
+			padding: 18px;
+			background:
+				radial-gradient(900px 220px at 4% 0%, rgba(var(--bs-primary-rgb), .18), rgba(var(--bs-primary-rgb), 0)),
+				linear-gradient(135deg, rgba(var(--bs-body-bg-rgb), .96), rgba(var(--bs-body-bg-rgb), .84));
+			border: 1px solid rgba(var(--bs-primary-rgb), .24);
+			box-shadow: 0 14px 28px rgba(2, 22, 48, .09);
+		}
+		.site-footer-grid {
+			position: relative;
+			z-index: 1;
+			display: grid;
+			grid-template-columns: 1.3fr .9fr;
+			gap: 14px;
+		}
+		@media (max-width: 991.98px) {
+			.site-footer-grid { grid-template-columns: 1fr; }
+		}
+		.footer-orb {
+			position: absolute;
+			right: -32px;
+			top: -38px;
+			width: 150px;
+			height: 150px;
+			border-radius: 999px;
+			background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.75), rgba(var(--bs-primary-rgb), .45) 46%, rgba(var(--bs-primary-rgb), 0) 70%);
+			filter: blur(1px);
+			opacity: .75;
+			animation: orbFloat 7.6s var(--ui-ease) infinite alternate;
+			pointer-events: none;
+		}
+		@keyframes orbFloat {
+			0% { transform: translate3d(0,0,0) scale(1); }
+			100% { transform: translate3d(-16px,10px,0) scale(1.08); }
+		}
+		.footer-title {
+			font-weight: 800;
+			letter-spacing: .2px;
+			font-size: 1.05rem;
+		}
+		.footer-title i { color: rgb(var(--bs-primary-rgb)); }
+		.footer-sub {
+			font-size: .92rem;
+			color: var(--bs-secondary-color);
+			margin-top: 4px;
+		}
+		.footer-meta {
+			display: flex;
+			gap: .5rem;
+			flex-wrap: wrap;
+			margin-top: 10px;
+		}
+		.footer-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: .35rem;
+			padding: .3rem .58rem;
+			border-radius: 999px;
+			font-size: .78rem;
+			font-weight: 700;
+			background: rgba(var(--bs-primary-rgb), .12);
+			border: 1px solid rgba(var(--bs-primary-rgb), .26);
+		}
+		.footer-right {
+			display: grid;
+			gap: .55rem;
+			align-content: center;
+		}
+		.footer-tip {
+			padding: .68rem .8rem;
+			border-radius: 12px;
+			border: 1px dashed rgba(var(--bs-primary-rgb), .35);
+			background: rgba(var(--bs-primary-rgb), .08);
+			font-size: .9rem;
+			font-weight: 600;
+			min-height: 46px;
+			display: flex;
+			align-items: center;
+			animation: tipPulse 3.8s var(--ui-ease) infinite;
+		}
+		@keyframes tipPulse {
+			0%, 100% { box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), .0); }
+			50% { box-shadow: 0 0 0 7px rgba(var(--bs-primary-rgb), .06); }
+		}
+		.footer-utilities {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+			flex-wrap: wrap;
+		}
+		.footer-dna {
+			display: inline-flex;
+			align-items: center;
+			gap: .35rem;
+			font-size: .82rem;
+			color: var(--bs-body-color);
+			font-weight: 700;
+			padding: .34rem .62rem;
+			border-radius: 10px;
+			border: 1px solid rgba(var(--bs-primary-rgb), .36);
+			background: linear-gradient(180deg, rgba(var(--bs-primary-rgb), .16), rgba(var(--bs-primary-rgb), .08));
+			box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+		}
+		.footer-dna.is-creative { border-color: rgba(244,63,94,.45); background: linear-gradient(180deg, rgba(244,63,94,.18), rgba(244,63,94,.08)); }
+		.footer-dna.is-minimal { border-color: rgba(100,116,139,.45); background: linear-gradient(180deg, rgba(100,116,139,.16), rgba(100,116,139,.08)); }
+		.footer-dna.is-corporate { border-color: rgba(37,99,235,.45); background: linear-gradient(180deg, rgba(37,99,235,.16), rgba(37,99,235,.08)); }
+		.footer-dna.is-bold { border-color: rgba(249,115,22,.45); background: linear-gradient(180deg, rgba(249,115,22,.16), rgba(249,115,22,.08)); }
+		.footer-cta {
+			display: inline-flex;
+			align-items: center;
+			gap: .35rem;
+			padding: .35rem .66rem;
+			border-radius: 999px;
+			border: 1px solid rgba(var(--bs-primary-rgb), .36);
+			background: rgba(var(--bs-primary-rgb), .10);
+			font-size: .82rem;
+			font-weight: 700;
+			cursor: pointer;
+			transition: transform 180ms var(--ui-ease), background-color 180ms var(--ui-ease), border-color 180ms var(--ui-ease);
+		}
+		.footer-cta:hover {
+			transform: translateY(-1px);
+			background: rgba(var(--bs-primary-rgb), .16);
+			border-color: rgba(var(--bs-primary-rgb), .5);
+		}
+		[data-bs-theme="dark"] .site-footer {
+			background:
+				radial-gradient(900px 220px at 4% 0%, rgba(var(--bs-primary-rgb), .20), rgba(var(--bs-primary-rgb), 0)),
+				linear-gradient(135deg, rgba(10,18,30,.96), rgba(20,30,48,.88));
+			border-color: rgba(148,163,184,.32);
+		}
+		[data-bs-theme="dark"] .footer-sub,
+		[data-bs-theme="dark"] .footer-dna { color: rgba(226,232,240,.84); }
+		[data-bs-theme="dark"] .footer-dna {
+			border-color: rgba(147,197,253,.36);
+			background: linear-gradient(180deg, rgba(var(--bs-primary-rgb), .26), rgba(var(--bs-primary-rgb), .15));
+			box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+		}
+		[data-bs-theme="dark"] .footer-tip {
+			background: rgba(var(--bs-primary-rgb), .14);
+			border-color: rgba(147,197,253,.5);
+			color: #e2e8f0;
+		}
 	</style>
 </head>
 
@@ -679,11 +1151,11 @@
 						<div class="designer-actions d-flex flex-wrap gap-2 align-items-center">
 							<button id="btnBackToLanding" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</button>
 							<div class="dropdown">
-								<button class="btn btn-primary d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">
+								<button class="btn btn-primary d-inline-flex align-items-center gap-2 designer-menu-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">
 									<i class="bi bi-list" style="font-size: 20px;"></i>
 									<span class="d-none d-sm-inline">Menu</span>
 								</button>
-								<ul class="dropdown-menu dropdown-menu-end">
+								<ul class="dropdown-menu dropdown-menu-end designer-menu">
 									<li><button id="actionPng" type="button" class="dropdown-item"><i class="bi bi-image me-2"></i>Download PNG</button></li>
 									<li><button id="actionPdf" type="button" class="dropdown-item"><i class="bi bi-file-earmark-pdf me-2"></i>Download PDF</button></li>
 									<li><hr class="dropdown-divider"></li>
@@ -691,18 +1163,27 @@
 									<li><button id="actionShare" type="button" class="dropdown-item"><i class="bi bi-link-45deg me-2"></i>Copy Share Link</button></li>
 								</ul>
 							</div>
+							<button id="btnThemeToggle" class="btn btn-outline-secondary theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark/light mode">
+								<i id="themeToggleIcon" class="bi bi-moon-stars me-1"></i><span id="themeToggleText">Dark</span>
+							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<div class="col-12 col-lg-5">
-				<div class="card shadow-sm">
-					<div class="card-body">
+				<div class="card shadow-sm designer-form-card">
+					<div class="card-body crystal-surface">
+						<div class="designer-form-header">
+							<div>
+								<div class="title">Card Details</div>
+								<div class="subtitle">Fill in your info and settings — the preview updates instantly.</div>
+							</div>
+						</div>
 						<div class="row g-3">
 							<div class="col-12">
 									<div class="d-flex align-items-center justify-content-between mb-2">
-										<h2 class="h6 mb-0">Sample Designs</h2>
+										<h2 class="h6 mb-0 form-section-title">Sample Designs</h2>
 										<button id="btnViewAllDesigns" type="button" class="btn btn-sm btn-outline-secondary">View all designs</button>
 									</div>
 									<div id="sampleDesignsWrap" class="sample-grid samples-collapsed" aria-label="Sample designs">
@@ -777,7 +1258,7 @@
 
 							<!-- Mobile: preview toggle between designs and form -->
 							<div class="col-12 d-lg-none">
-								<div class="card border">
+								<div class="card border crystal-surface">
 									<div class="card-body py-2">
 										<button class="btn btn-link text-decoration-none p-0 mobile-preview-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mobilePreviewCollapse" aria-expanded="false" aria-controls="mobilePreviewCollapse">
 											<span class="fw-semibold text-body">Live Preview</span>
@@ -792,7 +1273,7 @@
 								</div>
 							</div>
 							<div id="customDesignsWrap" class="col-12 d-none">
-								<h2 class="h6 mb-2">Custom Designs</h2>
+								<h2 class="h6 mb-2 form-section-title with-divider">Custom Designs</h2>
 								<div class="sample-grid" id="customGrid" aria-label="Custom designs"></div>
 								<div class="text-body-secondary small mt-2">Saved in this browser. Click to load.</div>
 							</div>
@@ -820,7 +1301,7 @@
 							</div>
 
 							<div class="col-12">
-								<h2 class="h6 mb-2">User Information</h2>
+								<h2 class="h6 mb-2 form-section-title with-divider">User Information</h2>
 							</div>
 
 							<div class="col-sm-6">
@@ -853,7 +1334,7 @@
 							</div>
 
 							<div class="col-12">
-								<h2 class="h6 mb-2 mt-2">Social Media Links</h2>
+								<h2 class="h6 mb-2 mt-2 form-section-title with-divider">Social Media Links</h2>
 							</div>
 							<div class="col-sm-4">
 								<label class="form-label">LinkedIn</label>
@@ -869,23 +1350,7 @@
 							</div>
 
 							<div class="col-12">
-								<h2 class="h6 mb-2 mt-2">Colors</h2>
-							</div>
-							<div class="col-sm-4">
-								<label class="form-label">Background</label>
-								<input id="bgColor" type="color" class="form-control form-control-color" value="#0b1f3a" />
-							</div>
-							<div class="col-sm-4">
-								<label class="form-label">Text</label>
-								<input id="textColor" type="color" class="form-control form-control-color" value="#ffffff" />
-							</div>
-							<div class="col-sm-4">
-								<label class="form-label">Accent</label>
-								<input id="accentColor" type="color" class="form-control form-control-color" value="#2f80ed" />
-							</div>
-
-							<div class="col-12">
-								<h2 class="h6 mb-2 mt-2">Logo & Profile</h2>
+								<h2 class="h6 mb-2 mt-2 form-section-title with-divider">Logo & Profile</h2>
 							</div>
 							<div class="col-sm-6">
 								<label class="form-label">Company Logo</label>
@@ -896,42 +1361,11 @@
 								<input id="avatarUpload" type="file" accept="image/*" class="form-control" />
 							</div>
 
-							<div class="col-12">
-								<h2 class="h6 mb-2 mt-2">Font & Style</h2>
-							</div>
-							<div class="col-sm-6">
-								<label class="form-label">Font</label>
-								<select id="fontFamily" class="form-select">
-									<option value="Inter">Inter</option>
-									<option value="Poppins">Poppins</option>
-									<option value="Montserrat">Montserrat</option>
-									<option value="Roboto">Roboto</option>
-									<option value="system">System Default</option>
-								</select>
-							</div>
-							<div class="col-sm-6">
-								<label class="form-label">Text Size</label>
-								<input id="fontSize" type="range" min="12" max="18" value="14" class="form-range" />
-							</div>
-							<div class="col-12">
-								<div class="d-flex flex-wrap gap-3">
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="nameBold" checked />
-										<label class="form-check-label" for="nameBold">Bold name</label>
-									</div>
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="titleItalic" />
-										<label class="form-check-label" for="titleItalic">Italic title</label>
-									</div>
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="companyBold" checked />
-										<label class="form-check-label" for="companyBold">Bold company</label>
-									</div>
-								</div>
-							</div>
+							<!-- On desktop this section is rendered under the preview -->
+							<div id="mobileStyleHost" class="col-12 mt-2"></div>
 
 							<div class="col-12">
-								<h2 class="h6 mb-2 mt-2">QR Code (Advanced)</h2>
+								<h2 class="h6 mb-2 mt-2 form-section-title with-divider">QR Code (Advanced)</h2>
 							</div>
 							<div class="col-sm-6">
 								<label class="form-label">QR Type</label>
@@ -962,11 +1396,12 @@
 			<div class="col-12 col-lg-7">
 				<!-- Desktop preview host (preview panel is moved here on lg+) -->
 				<div id="desktopPreviewHost"></div>
+				<div id="desktopStyleHost" class="mt-3"></div>
 			</div>
 
 			<!-- Preview panel (moved between desktop/mobile hosts) -->
 			<div id="previewPanel" class="d-none">
-				<div class="card shadow-sm position-sticky preview-sticky" style="top: 16px;">
+				<div class="card shadow-sm crystal-surface position-sticky preview-sticky" style="top: 16px;">
 					<div class="card-body">
 						<div class="d-flex align-items-center justify-content-between mb-3">
 							<div>
@@ -1074,8 +1509,99 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- Style panel (moved between desktop/mobile hosts) -->
+			<div id="stylePanel" class="d-none">
+				<div class="card shadow-sm crystal-surface">
+					<div class="card-body">
+						<div class="d-flex align-items-start justify-content-between gap-3 mb-2">
+							<div>
+								<h2 class="h6 mb-0">Colors & Typography</h2>
+								<div class="text-body-secondary small">Tweak colors, font, and emphasis.</div>
+							</div>
+						</div>
+						<div class="row g-3">
+							<div class="col-12">
+								<h3 class="h6 mb-1">Colors</h3>
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Background</label>
+								<input id="bgColor" type="color" class="form-control form-control-color" value="#0b1f3a" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Text</label>
+								<input id="textColor" type="color" class="form-control form-control-color" value="#ffffff" />
+							</div>
+							<div class="col-sm-4">
+								<label class="form-label">Accent</label>
+								<input id="accentColor" type="color" class="form-control form-control-color" value="#2f80ed" />
+							</div>
+
+							<div class="col-12 mt-1">
+								<h3 class="h6 mb-1">Font & Style</h3>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Font</label>
+								<select id="fontFamily" class="form-select">
+									<option value="Inter">Inter</option>
+									<option value="Poppins">Poppins</option>
+									<option value="Montserrat">Montserrat</option>
+									<option value="Roboto">Roboto</option>
+									<option value="system">System Default</option>
+								</select>
+							</div>
+							<div class="col-sm-6">
+								<label class="form-label">Text Size</label>
+								<input id="fontSize" type="range" min="12" max="18" value="14" class="form-range" />
+							</div>
+							<div class="col-12">
+								<div class="d-flex flex-wrap gap-3">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="nameBold" checked />
+										<label class="form-check-label" for="nameBold">Bold name</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="titleItalic" />
+										<label class="form-check-label" for="titleItalic">Italic title</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" id="companyBold" checked />
+										<label class="form-check-label" for="companyBold">Bold company</label>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
+
+	<footer class="site-footer-wrap no-print">
+		<div class="site-footer">
+			<div class="footer-orb" aria-hidden="true"></div>
+			<div class="site-footer-grid">
+				<div>
+					<div class="footer-title"><i class="bi bi-stars me-1"></i>Creative Identity Lab</div>
+					<div class="footer-sub">Your card is not just contact info, it is your 5-second brand story.</div>
+					<div class="footer-meta" aria-label="Footer highlights">
+						<span class="footer-chip"><i class="bi bi-lightning-charge-fill"></i>Live Personalization</span>
+						<span class="footer-chip"><i class="bi bi-vector-pen"></i>Brand-Ready Layouts</span>
+						<span class="footer-chip"><i class="bi bi-filetype-pdf"></i>Instant Export</span>
+					</div>
+				</div>
+				<div class="footer-right">
+					<div id="footerTip" class="footer-tip"><i class="bi bi-lightbulb me-2"></i>Tip: Use one accent color across logo, icon chips, and CTA for visual consistency.</div>
+					<div class="footer-utilities">
+						<div id="footerStyleDNA" class="footer-dna is-corporate"><i id="footerStyleDNAIcon" class="bi bi-activity"></i><span id="footerStyleDNAText">Design Mood: Corporate Precision</span></div>
+						<button id="btnSurprise" type="button" class="footer-cta" title="Load a random sample design">
+							<i class="bi bi-shuffle"></i>Surprise Me
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer>
 
 	<!-- Hidden print area (same DOM is re-used by print CSS) -->
 	<div id="printArea" aria-hidden="true">
@@ -1095,6 +1621,14 @@
 			designerView: $('designerView'),
 			btnStart: $('btnStart'),
 			btnBackToLanding: $('btnBackToLanding'),
+			btnThemeToggle: $('btnThemeToggle'),
+			themeToggleIcon: $('themeToggleIcon'),
+			themeToggleText: $('themeToggleText'),
+			footerTip: $('footerTip'),
+			footerStyleDNA: $('footerStyleDNA'),
+			footerStyleDNAIcon: $('footerStyleDNAIcon'),
+			footerStyleDNAText: $('footerStyleDNAText'),
+			btnSurprise: $('btnSurprise'),
 			actionPng: $('actionPng'),
 			actionPdf: $('actionPdf'),
 			actionSaveCustom: $('actionSaveCustom'),
@@ -1104,8 +1638,11 @@
 			customGrid: $('customGrid'),
 			sampleDesignsWrap: $('sampleDesignsWrap'),
 			previewPanel: $('previewPanel'),
+			stylePanel: $('stylePanel'),
 			desktopPreviewHost: $('desktopPreviewHost'),
+			desktopStyleHost: $('desktopStyleHost'),
 			mobilePreviewHost: $('mobilePreviewHost'),
+			mobileStyleHost: $('mobileStyleHost'),
 			mobilePreviewCollapse: $('mobilePreviewCollapse'),
 			template: $('template'),
 			layout: $('layout'),
@@ -1157,22 +1694,130 @@
 			history.replaceState(null, '', url);
 		}
 
+		const THEME_KEY = 'visitingCard.theme.v1';
+		function systemTheme() {
+			return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		}
+		function updateThemeToggleUi(theme) {
+			if (els.themeToggleIcon) {
+				els.themeToggleIcon.className = theme === 'dark' ? 'bi bi-sun me-1' : 'bi bi-moon-stars me-1';
+			}
+			if (els.themeToggleText) {
+				els.themeToggleText.textContent = theme === 'dark' ? 'Light' : 'Dark';
+			}
+			if (els.btnThemeToggle) {
+				els.btnThemeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+			}
+		}
+		function applyTheme(theme, { persist = true } = {}) {
+			const resolved = theme === 'dark' ? 'dark' : 'light';
+			document.documentElement.setAttribute('data-bs-theme', resolved);
+			updateThemeToggleUi(resolved);
+			if (persist) {
+				try { localStorage.setItem(THEME_KEY, resolved); } catch { /* ignore */ }
+			}
+		}
+		function initTheme() {
+			let saved = null;
+			try { saved = localStorage.getItem(THEME_KEY); } catch { /* ignore */ }
+			applyTheme(saved || 'dark', { persist: false });
+		}
+		function toggleTheme() {
+			const current = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+			applyTheme(current === 'dark' ? 'light' : 'dark');
+		}
+
+		const footerTips = [
+			'Tip: Keep the name line stronger than all other text for instant identity recognition.',
+			'Tip: Pair one clean font with one accent color and let spacing do the heavy lifting.',
+			'Tip: On dark cards, lift body text contrast slightly to improve print legibility.',
+			'Tip: Make QR content specific: website for discovery, vCard for instant contact save.'
+		];
+		let footerTipIdx = 0;
+		let footerTipTimer = null;
+
+		function updateFooterStyleDNA() {
+			if (!els.footerStyleDNA && !els.footerStyleDNAText) return;
+			const template = (els.template?.value || 'corporate').toLowerCase();
+			const layout = (els.layout?.value || 'classic-left').toLowerCase();
+			const accent = (els.accentColor?.value || '#2f80ed').toLowerCase();
+			let mood = 'Corporate Precision';
+			let moodClass = 'is-corporate';
+			let icon = 'bi bi-activity';
+
+			if (template === 'creative' || accent.startsWith('#ff') || accent.startsWith('#f4')) {
+				mood = 'Creative Energy';
+				moodClass = 'is-creative';
+				icon = 'bi bi-lightning-charge';
+			} else if (template === 'minimal' || layout === 'centered') {
+				mood = 'Minimal Clarity';
+				moodClass = 'is-minimal';
+				icon = 'bi bi-circle-square';
+			} else if (template === 'dark') {
+				mood = 'Premium Night';
+				moodClass = 'is-bold';
+				icon = 'bi bi-moon-stars';
+			} else if (layout === 'split') {
+				mood = 'Bold Impact';
+				moodClass = 'is-bold';
+				icon = 'bi bi-bezier2';
+			}
+
+			const text = `Design Mood: ${mood}`;
+			if (els.footerStyleDNA) {
+				els.footerStyleDNA.classList.remove('is-creative', 'is-minimal', 'is-corporate', 'is-bold');
+				els.footerStyleDNA.classList.add(moodClass);
+			}
+			if (els.footerStyleDNAIcon) els.footerStyleDNAIcon.className = icon;
+			if (els.footerStyleDNAText) els.footerStyleDNAText.textContent = text;
+			else if (els.footerStyleDNA) els.footerStyleDNA.textContent = text;
+		}
+		function rotateFooterTip() {
+			if (!els.footerTip) return;
+			footerTipIdx = (footerTipIdx + 1) % footerTips.length;
+			els.footerTip.innerHTML = `<i class="bi bi-lightbulb me-2"></i>${footerTips[footerTipIdx]}`;
+		}
+		function initFooter() {
+			if (els.footerTip && footerTips.length) {
+				els.footerTip.innerHTML = `<i class="bi bi-lightbulb me-2"></i>${footerTips[0]}`;
+				if (footerTipTimer) window.clearInterval(footerTipTimer);
+				footerTipTimer = window.setInterval(rotateFooterTip, 5000);
+			}
+			updateFooterStyleDNA();
+		}
+
 		function showLanding({ clearHash = false } = {}) {
 			if (clearHash) clearShareHash();
 			els.landingView?.classList.remove('d-none');
 			els.designerView?.classList.add('d-none');
+			els.designerView?.classList.remove('animate-in');
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
 
 		function showDesigner() {
 			els.landingView?.classList.add('d-none');
 			els.designerView?.classList.remove('d-none');
+			// Re-trigger entrance animations
+			els.designerView?.classList.remove('animate-in');
+			requestAnimationFrame(() => {
+				els.designerView?.classList.add('animate-in');
+				window.setTimeout(() => els.designerView?.classList.remove('animate-in'), 800);
+			});
 			mountPreviewForViewport();
 			requestScale();
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
 
 		const mqlLgDown = window.matchMedia('(max-width: 991.98px)');
+		function mountStyleForViewport() {
+			const panel = els.stylePanel;
+			const desktopHost = els.desktopStyleHost;
+			const mobileHost = els.mobileStyleHost;
+			if (!panel || !desktopHost || !mobileHost) return;
+			const target = mqlLgDown.matches ? mobileHost : desktopHost;
+			if (panel.parentElement !== target) target.appendChild(panel);
+			panel.classList.remove('d-none');
+		}
 		function mountPreviewForViewport() {
 			const panel = els.previewPanel;
 			const desktopHost = els.desktopPreviewHost;
@@ -1181,6 +1826,7 @@
 			const target = mqlLgDown.matches ? mobileHost : desktopHost;
 			if (panel.parentElement !== target) target.appendChild(panel);
 			panel.classList.remove('d-none');
+			mountStyleForViewport();
 			requestScale();
 		}
 
@@ -1298,11 +1944,11 @@
 		function applyTemplate(templateKey) {
 			const t = templates[templateKey] || templates.corporate;
 
-			els.bgColor.value = t.bg;
-			els.textColor.value = t.text;
-			els.accentColor.value = t.accent;
-			els.fontFamily.value = t.font;
-			els.layout.value = t.layout;
+			if (els.bgColor) els.bgColor.value = t.bg;
+			if (els.textColor) els.textColor.value = t.text;
+			if (els.accentColor) els.accentColor.value = t.accent;
+			if (els.fontFamily) els.fontFamily.value = t.font;
+			if (els.layout) els.layout.value = t.layout;
 
 			setCssVars({
 				bg: t.bg,
@@ -1312,13 +1958,14 @@
 			});
 
 			applyLayout(t.layout);
-			els.cardFront.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
-			els.cardBack.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
-			els.cardFront.classList.add(t.className);
-			els.cardBack.classList.add(t.className);
+			els.cardFront?.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
+			els.cardBack?.classList.remove('t-corporate', 't-minimal', 't-creative', 't-modern', 't-dark');
+			els.cardFront?.classList.add(t.className);
+			els.cardBack?.classList.add(t.className);
 		}
 
 		function hideIfEmpty(containerEl, value) {
+			if (!containerEl) return;
 			containerEl.style.display = value ? '' : 'none';
 		}
 
@@ -1398,39 +2045,40 @@
 		}
 
 		function qrPayload() {
-			const type = els.qrType.value;
-			if (type === 'linkedin') return normalizeUrl(els.linkedin.value);
+			const type = els.qrType?.value;
+			if (type === 'linkedin') return normalizeUrl(els.linkedin?.value);
 			if (type === 'vcard') return buildVCard();
 			// website + portfolio both use website
-			return normalizeUrl(els.website.value);
+			return normalizeUrl(els.website?.value);
 		}
 
 		function updateQr() {
-			const enabled = els.qrEnabled.checked;
-			els.qrWrap.classList.toggle('hidden', !enabled);
-			els.qrWrapBack.classList.toggle('hidden', !enabled);
+			const enabled = !!els.qrEnabled?.checked;
+			els.qrWrap?.classList.toggle('hidden', !enabled);
+			els.qrWrapBack?.classList.toggle('hidden', !enabled);
 			if (!enabled) return;
 
 			const payload = qrPayload();
 			const help = els.qrHelp;
 
 			if (!payload) {
-				help.classList.remove('alert-light');
-				help.classList.add('alert-warning');
-				help.textContent = 'QR content is empty. Fill Website/LinkedIn, or enter basic details for vCard.';
-				els.qr.innerHTML = '';
-				els.qrBack.innerHTML = '';
+				help?.classList.remove('alert-light');
+				help?.classList.add('alert-warning');
+				if (help) help.textContent = 'QR content is empty. Fill Website/LinkedIn, or enter basic details for vCard.';
+				if (els.qr) els.qr.innerHTML = '';
+				if (els.qrBack) els.qrBack.innerHTML = '';
 				qrInstance = null;
 				qrInstanceBack = null;
 				return;
 			}
 
-			help.classList.remove('alert-warning');
-			help.classList.add('alert-light');
-			help.textContent = 'QR uses your Website/LinkedIn fields, or a vCard built from your details.';
+			help?.classList.remove('alert-warning');
+			help?.classList.add('alert-light');
+			if (help) help.textContent = 'QR uses your Website/LinkedIn fields, or a vCard built from your details.';
 
-			els.qr.innerHTML = '';
-			els.qrBack.innerHTML = '';
+			if (els.qr) els.qr.innerHTML = '';
+			if (els.qrBack) els.qrBack.innerHTML = '';
+			if (!els.qr || !els.qrBack) return;
 			qrInstance = new QRCode(els.qr, {
 				text: payload,
 				width: 118,
@@ -1456,61 +2104,62 @@
 		}
 
 		function updatePreview() {
-			const name = (els.fullName.value || '').trim();
-			const title = (els.jobTitle.value || '').trim();
-			const company = (els.company.value || '').trim();
+			const name = (els.fullName?.value || '').trim();
+			const title = (els.jobTitle?.value || '').trim();
+			const company = (els.company?.value || '').trim();
 
-			const phone = (els.phone.value || '').trim();
-			const email = (els.email.value || '').trim();
-			const web = (els.website.value || '').trim();
-			const address = (els.address.value || '').trim();
+			const phone = (els.phone?.value || '').trim();
+			const email = (els.email?.value || '').trim();
+			const web = (els.website?.value || '').trim();
+			const address = (els.address?.value || '').trim();
 
-			const linkedin = (els.linkedin.value || '').trim();
-			const twitter = (els.twitter.value || '').trim();
-			const instagram = (els.instagram.value || '').trim();
+			const linkedin = (els.linkedin?.value || '').trim();
+			const twitter = (els.twitter?.value || '').trim();
+			const instagram = (els.instagram?.value || '').trim();
 
-			preview.pName.textContent = name || 'Your Name';
-			preview.pTitleText.textContent = title || 'Your title';
-			preview.pCompany.textContent = company || 'Your Company';
-			back.bCompany.textContent = company || 'Your Company';
-			back.bTag.textContent = title ? title : 'Professional services • Since 2026';
+			if (preview.pName) preview.pName.textContent = name || 'Your Name';
+			if (preview.pTitleText) preview.pTitleText.textContent = title || 'Your title';
+			if (preview.pCompany) preview.pCompany.textContent = company || 'Your Company';
+			if (back.bCompany) back.bCompany.textContent = company || 'Your Company';
+			if (back.bTag) back.bTag.textContent = title ? title : 'Professional services • Since 2026';
 
-			preview.pPhone.textContent = phone || '+1 (555) 123-4567';
-			preview.pEmail.textContent = email || 'you@example.com';
-			preview.pWebsite.textContent = web || 'example.com';
-			preview.pAddress.textContent = address || 'City, Country';
+			if (preview.pPhone) preview.pPhone.textContent = phone || '+1 (555) 123-4567';
+			if (preview.pEmail) preview.pEmail.textContent = email || 'you@example.com';
+			if (preview.pWebsite) preview.pWebsite.textContent = web || 'example.com';
+			if (preview.pAddress) preview.pAddress.textContent = address || 'City, Country';
 
 			hideIfEmpty(preview.dPhone, phone);
 			hideIfEmpty(preview.dEmail, email);
 			hideIfEmpty(preview.dWeb, web);
 			hideIfEmpty(preview.dAddr, address);
 
-			back.bWebsite.textContent = web || 'example.com';
-			back.bEmail.textContent = email || 'you@example.com';
+			if (back.bWebsite) back.bWebsite.textContent = web || 'example.com';
+			if (back.bEmail) back.bEmail.textContent = email || 'you@example.com';
 			hideIfEmpty(back.bWebChip, web);
 			hideIfEmpty(back.bEmailChip, email);
 
-			preview.pLinkedIn.textContent = linkedin || 'linkedin.com';
-			preview.pTwitter.textContent = twitter || 'x.com';
-			preview.pInstagram.textContent = instagram || 'instagram.com';
+			if (preview.pLinkedIn) preview.pLinkedIn.textContent = linkedin || 'linkedin.com';
+			if (preview.pTwitter) preview.pTwitter.textContent = twitter || 'x.com';
+			if (preview.pInstagram) preview.pInstagram.textContent = instagram || 'instagram.com';
 			hideIfEmpty(preview.sLinkedIn, linkedin);
 			hideIfEmpty(preview.sTwitter, twitter);
 			hideIfEmpty(preview.sInstagram, instagram);
 
 			// Font & style toggles
-			preview.pName.style.fontWeight = els.nameBold.checked ? '700' : '500';
-			preview.pTitleText.style.fontStyle = els.titleItalic.checked ? 'italic' : 'normal';
-			preview.pCompany.style.fontWeight = els.companyBold.checked ? '700' : '600';
+			if (preview.pName && els.nameBold) preview.pName.style.fontWeight = els.nameBold.checked ? '700' : '500';
+			if (preview.pTitleText && els.titleItalic) preview.pTitleText.style.fontStyle = els.titleItalic.checked ? 'italic' : 'normal';
+			if (preview.pCompany && els.companyBold) preview.pCompany.style.fontWeight = els.companyBold.checked ? '700' : '600';
 
 			setCssVars({
-				bg: els.bgColor.value,
-				text: els.textColor.value,
-				accent: els.accentColor.value,
-				fontFamily: fontCssFromSelect(els.fontFamily.value),
-				fontSizePx: (Number(els.fontSize.value) || 14) + 'px'
+				bg: els.bgColor?.value || '#0b1f3a',
+				text: els.textColor?.value || '#ffffff',
+				accent: els.accentColor?.value || '#2f80ed',
+				fontFamily: fontCssFromSelect(els.fontFamily?.value),
+				fontSizePx: (Number(els.fontSize?.value) || 14) + 'px'
 			});
 
-			applyLayout(els.layout.value);
+			applyLayout(els.layout?.value);
+			updateFooterStyleDNA();
 			updateQr();
 			requestScale();
 			pulsePreview();
@@ -1873,50 +2522,56 @@
 				els.nameBold, els.titleItalic, els.companyBold,
 				els.layout, els.qrType, els.qrEnabled
 			];
-			liveInputs.forEach((el) => {
+			liveInputs.filter(Boolean).forEach((el) => {
 				el.addEventListener('input', updatePreview);
 				el.addEventListener('change', updatePreview);
 			});
 
-			els.template.addEventListener('change', () => {
-				applyTemplate(els.template.value);
+			els.template?.addEventListener('change', () => {
+				applyTemplate(els.template?.value);
 				updatePreview();
 			});
 
 			// Auto-enable & update QR when user enters links
-			els.website.addEventListener('input', () => {
-				const v = (els.website.value || '').trim();
+			els.website?.addEventListener('input', () => {
+				const v = (els.website?.value || '').trim();
 				if (!v) return;
-				if (els.qrType.value !== 'website' && els.qrType.value !== 'portfolio') {
+				if (els.qrType && els.qrType.value !== 'website' && els.qrType.value !== 'portfolio') {
 					els.qrType.value = 'website';
 				}
-				els.qrEnabled.checked = true;
+				if (els.qrEnabled) els.qrEnabled.checked = true;
 				updateQr();
 			});
-			els.linkedin.addEventListener('input', () => {
-				const v = (els.linkedin.value || '').trim();
+			els.linkedin?.addEventListener('input', () => {
+				const v = (els.linkedin?.value || '').trim();
 				if (!v) return;
-				els.qrType.value = 'linkedin';
-				els.qrEnabled.checked = true;
+				if (els.qrType) els.qrType.value = 'linkedin';
+				if (els.qrEnabled) els.qrEnabled.checked = true;
 				updateQr();
 			});
 
-			els.logoUpload.addEventListener('change', () => {
-				readImage(els.logoUpload.files?.[0], preview.logoImg, preview.logoFallback);
-				readImage(els.logoUpload.files?.[0], preview.logoImgBack, preview.logoFallbackBack);
+			els.logoUpload?.addEventListener('change', () => {
+				readImage(els.logoUpload?.files?.[0], preview.logoImg, preview.logoFallback);
+				readImage(els.logoUpload?.files?.[0], preview.logoImgBack, preview.logoFallbackBack);
 			});
 			els.btnFront?.addEventListener('click', showFront);
 			els.btnBack?.addEventListener('click', showBack);
 			els.btnFlip?.addEventListener('click', toggleFlip);
-			els.avatarUpload.addEventListener('change', () => {
-				if (els.avatarUpload.files?.[0]) setAvatarHidden(false);
-				readImage(els.avatarUpload.files?.[0], preview.avatarImg, preview.avatarFallback);
+			els.avatarUpload?.addEventListener('change', () => {
+				if (els.avatarUpload?.files?.[0]) setAvatarHidden(false);
+				readImage(els.avatarUpload?.files?.[0], preview.avatarImg, preview.avatarFallback);
 			});
 
 			els.actionPng?.addEventListener('click', exportPng);
 			els.actionPdf?.addEventListener('click', exportPdf);
 			els.actionSaveCustom?.addEventListener('click', saveCustomDesign);
 			els.actionShare?.addEventListener('click', copyShareLink);
+			els.btnThemeToggle?.addEventListener('click', toggleTheme);
+			els.btnSurprise?.addEventListener('click', () => {
+				if (!Array.isArray(samples) || samples.length === 0) return;
+				const idx = Math.floor(Math.random() * samples.length);
+				loadSample(idx);
+			});
 
 			els.btnViewAllDesigns?.addEventListener('click', () => {
 				const wrap = els.sampleDesignsWrap;
@@ -1933,11 +2588,18 @@
 
 			// Samples
 			const sampleGrid = document.getElementById('sampleDesignsWrap');
+			const closeSamplesPanel = () => {
+				const wrap = els.sampleDesignsWrap;
+				if (!wrap) return;
+				wrap.classList.add('samples-collapsed');
+				if (els.btnViewAllDesigns) els.btnViewAllDesigns.textContent = 'View all designs';
+			};
 			sampleGrid?.addEventListener('click', (e) => {
 				const node = e.target.closest?.('.sample');
 				if (!node) return;
 				const idx = Number(node.getAttribute('data-sample'));
 				loadSample(idx);
+				closeSamplesPanel();
 			});
 			sampleGrid?.addEventListener('keydown', (e) => {
 				if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -1946,6 +2608,7 @@
 				e.preventDefault();
 				const idx = Number(node.getAttribute('data-sample'));
 				loadSample(idx);
+				closeSamplesPanel();
 			});
 
 			window.addEventListener('afterprint', clearPrintDom);
@@ -2116,11 +2779,25 @@
 			if (!s) return;
 			applyState(s);
 			showFront();
+			setSelectedSample(idx);
 			showDesigner();
 			requestScale();
 		}
 
+		function setSelectedSample(idx) {
+			const wrap = els.sampleDesignsWrap;
+			if (!wrap) return;
+			wrap.querySelectorAll('.sample.is-selected').forEach((n) => n.classList.remove('is-selected'));
+			const el = wrap.querySelector(`.sample[data-sample="${idx}"]`);
+			if (!el) return;
+			el.classList.add('is-selected');
+			// Keep selected design visible even when the grid is collapsed (2 cards).
+			if (wrap.firstElementChild !== el) wrap.insertBefore(el, wrap.firstElementChild);
+		}
+
 		// Init
+		initTheme();
+		initFooter();
 		wire();
 		mountPreviewForViewport();
 		applyTemplate('corporate');
